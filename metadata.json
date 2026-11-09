@@ -1,0 +1,5 @@
+{
+  "name": "数字孪生与具身机器人现实基准总控台 (Mega-Hangar Digital Twin Hub)",
+  "description": "集成波音B737/CFM56涡扇四级数字孪生、NASA毅力号火星车与空中吊车四级数字孪生、具身智能/水下ROV/搜救机器人3D数字孪生检视器及39库(1,138个URDF/XML)原始运动学基准总控台。",
+  "requestFramePermissions": []
+}
