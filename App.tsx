@@ -253,7 +253,7 @@ export default function App() {
       (gltf) => {
         const root = gltf.scene;
         // Rotate Z-up URDF models to Y-up Three.js convention if needed
-        root.rotation.x = -Math.PI / 2;
+        // GLB exported from Blender is already Y-up
         root.updateMatrixWorld(true);
 
         const box = new THREE.Box3().setFromObject(root);
