@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="ramp_30deg">
+    <static>true</static>
+    <link name="link">
+      <pose>0 0 0.5 0 -0.5236 0</pose> <!-- 0.5236 rad is 30 degrees -->
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>2.0 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>2.0 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.4 0.2 1</ambient>
+            <diffuse>0.6 0.4 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -1,0 +1,41 @@
+=== Web Results ===
+
+[PDF] Wai-Fah Chen Lian Duan
+  URL: https://www.uceb.eu/DATA/CivBook/24.%20Bridge%20Engineering%20Construction%20and%20Maintenance,%20Wai-Fah%20Chen.pdf
+  The Bridge Engineering Handbook is a unique, comprehensive, and the state-of-the-art reference work and resource book covering the major areas of bridge ...
+
+Bridge Engineering Handbook, Construction | PDF - Scribd
+  URL: https://www.scribd.com/document/553793287/Bridge-Engineering-Handbook-Construction
+  Wai-Fah Chen is a research professor of civil engineering ... FIGURE 1.26 Cable-spinning procedure for constructing suspension bridge parallel-wire main cables, ...
+
+[PDF] Chapter 18 - Suspension Bridges - Free
+  URL: http://freeit.free.fr/Bridge%20Engineering%20HandBook/ch18.pdf
+  Anchorages: Massive concrete blocks which anchor main cables and act as end supports of a bridge. 18.2.2 Types of Suspension Bridges. Suspension bridges can be ...
+
+Bridge Engineering Handbook, Five Volume Set
+  URL: https://www.taylorfrancis.com/books/edit/10.1201/b16640/bridge-engineering-handbook-five-volume-set-wai-fah-chen-lian-duan
+  This extensive collection provides detailed information on bridge engineering, and thoroughly explains the concepts and practical applications ...
+
+Bridge Engineering Handbook: Construction and Maintenance
+  URL: https://books.google.com/books/about/Bridge_Engineering_Handbook.html?id=kavMBQAAQBAJ
+  Dr. Wai-Fah Chen is a research professor of civil engineering at the University of Hawaii. He earned his BS in civil engineering from the ...
+
+=== Alexandria Tools ===
+
+  gis-fema-hub-arcgis-com/building-footprints/records_list
+    Collect every structure of a county (optionally one occupancy class) page by page; resume with next_cursor until it is null.
+
+  web-pcc-gov-tw/public-procurement-notices/tender_detail
+    After search_tenders, to read one tender notice by its base64 pk (or a pasted searchTenderDetail / urlSelector tpam URL).
+
+  data-wprdc-org/licenses/get_license
+    After search_contractors, or when you have a Pittsburgh licence number, to confirm its status and term.
+
+  web-pcc-gov-tw/public-procurement-notices/award_detail
+    After search_awards, to read one award or failed-to-award notice by its base64 pk and kind (or a pasted QueryAtmAwardDetail / urlSelector atm or nonAtm URL).
+
+  data-oregon-gov/licenses/search_contractors
+    Find an Oregon contractor by business or person name, licence number, city, ZIP, county or licence type, or poll CCB for licences and endorsements registered since a date. Call get_license with a record's license_number and source for its source rows.
+
+Inspect: firecrawl list <provider> <capability> --pretty
+Use find-tools for tool sets or missing contracts; execute selected tools with scrape --alexandria <provider/capability> --options <json>.

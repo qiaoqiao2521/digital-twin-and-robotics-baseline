@@ -1,0 +1,68 @@
+{
+  "documentId": "JPL D-105568 / M2020-SYS-ICD-0042",
+  "title": "NASA/JPL Mars 2020 Perseverance Flight System — EDL Skycrane & Rover Mechanical Coordinate System (RMCS) Structural Station Blueprint",
+  "usagePolicy": "BACKSTAGE_CALIBRATION_ONLY — Used strictly to position 3D L0 skeletal datum stations, Skycrane bridle ports, and L1-L3 explosion vectors. Never render as a text-wall UI.",
+  "coordinateSystems": {
+    "RMCS_Rover_Mechanical": {
+      "origin": "Center of Rover Mobility Chassis Datum Plane (Ground Contact Plane Y_ThreeJS = 0.000m)",
+      "axesMapping_BlenderToThreeJS": {
+        "Rover_Forward_+X_R": "+Z (Three.js)",
+        "Rover_Aft_-X_R": "-Z (Three.js)",
+        "Rover_Starboard_+Y_R": "+X (Three.js)",
+        "Rover_Port_-Y_R": "-X (Three.js)",
+        "Rover_Zenith_-Z_R": "+Y (Three.js)"
+      },
+      "principalDimensions_mm": {
+        "chassisLength_mm": 3000,
+        "trackWidth_mm": 2140,
+        "wheelbase_mm": 2260,
+        "wheelDiameter_mm": 525,
+        "rsmMastHeight_mm": 2150,
+        "roboticArmReach_mm": 2100,
+        "edlAeroshellDiameter_mm": 4500,
+        "skycraneHoverSeparation_mm": 3150
+      }
+    }
+  },
+  "structuralStations": [
+    { "station": "STA-RMCS +1360", "z_m": 1.36, "role": "Robotic Arm Coring Turret Forward Envelope (PIXL / SHERLOC / Rotary Drill)" },
+    { "station": "STA-RMCS +1120", "z_m": 1.12, "role": "Front Cleated Aluminum Drive & Steering Wheel Axle Datum" },
+    { "station": "STA-RMCS +0960", "z_m": 0.96, "role": "Warm Electronics Box (WEB) Forward Bulkhead & Robotic Arm Shoulder Azimuth Mount" },
+    { "station": "STA-RMCS +0810", "z_m": 0.81, "role": "Adaptive Caching Assembly (ACA) Internal Sample Handling Laboratory Centerline" },
+    { "station": "STA-RMCS +0320", "z_m": 0.32, "role": "Remote Sensing Mast (RSM / SuperCam / Mastcam-Z) Deck Trunnion Station" },
+    { "station": "STA-RMCS -0035", "z_m": -0.035, "role": "Main Titanium Rocker-Bogie Differential Pivot Axis & Mid-Wheel Axle Datum" },
+    { "station": "STA-RMCS -0390", "z_m": -0.39, "role": "X-Band High-Gain Gimbaled Phased-Array Antenna (HGA) Deck Mount" },
+    { "station": "STA-RMCS -0880", "z_m": -0.88, "role": "Warm Electronics Box (WEB) Aft Structural Bulkhead & UHF Helical Antenna Station" },
+    { "station": "STA-RMCS -1140", "z_m": -1.14, "role": "Rear Cleated Aluminum Drive & Steering Wheel Axle Datum" },
+    { "station": "STA-RMCS -1250", "z_m": -1.25, "role": "MMRTG Pu-238 Radioisotope Thermoelectric Generator Cantilever Truss Station" }
+  ],
+  "mountingPorts": [
+    {
+      "id": "PORT_L1_MOBILITY",
+      "level": "L1",
+      "code": "RMCS STA -0035 / Y ±1070",
+      "title": "L1 钛合金摇臂转向架与六轮独立驱动悬架总成",
+      "spec": "6×Ø525mm 波形防滑铝轮 · 主差速平衡杆 · 95,038 三角面",
+      "position_m": [1.18, 0.72, -0.04],
+      "color": "#38bdf8"
+    },
+    {
+      "id": "PORT_L2_ROBOTICS",
+      "level": "L2",
+      "code": "RMCS STA +1085 / Z +1280",
+      "title": "L2 2.1米五自由度采样机械臂与 SuperCam 遥感桅杆",
+      "spec": "转塔冲击钻头 · PIXL X射线谱仪 · SHERLOC/WATSON · 43,522 三角面",
+      "position_m": [0.45, 1.38, 1.05],
+      "color": "#ff9e2c"
+    },
+    {
+      "id": "PORT_L3_CORE_MMRTG",
+      "level": "L3",
+      "code": "RMCS STA -1250 & +0810",
+      "title": "L3 恒温电子舱、ACA 内部采样实验室与 MMRTG 核电源",
+      "spec": "Pu-238 放射性同位素热电机 · 内部无菌封装转盘 · 60,961 三角面",
+      "position_m": [0.0, 1.26, -1.25],
+      "color": "#a855f7"
+    }
+  ]
+}

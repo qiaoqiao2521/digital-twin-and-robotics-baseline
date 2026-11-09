@@ -1,0 +1,228 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="rescue_arena">
+    <!-- Essential Ignition Plugins -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin
+      filename="libignition-gazebo-physics-system.so"
+      name="ignition::gazebo::systems::Physics">
+    </plugin>
+    <plugin
+      filename="libignition-gazebo-user-commands-system.so"
+      name="ignition::gazebo::systems::UserCommands">
+    </plugin>
+    <plugin
+      filename="libignition-gazebo-scene-broadcaster-system.so"
+      name="ignition::gazebo::systems::SceneBroadcaster">
+    </plugin>
+    <plugin
+        filename="libignition-gazebo-sensors-system.so"
+        name="ignition::gazebo::systems::Sensors">
+        <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <!-- A global light source -->
+    <include>
+      <uri>https://fuel.ignitionrobotics.org/1.0/OpenRobotics/models/Sun</uri>
+      <cast_shadows>false</cast_shadows>
+    </include>
+    
+    <!-- Custom Flooring Sections -->
+    <!-- Room 1 Floor: Spawn (Concrete) -->
+    <model name="floor_spawn">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+            <specular>0.5 0.5 0.5 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Room 2 Floor: Ramps (Wood color) -->
+    <model name="floor_ramps">
+      <static>true</static>
+      <pose>0 10 0 0 0 0</pose> 
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.6 0.4 0.2 1</ambient>
+            <diffuse>0.6 0.4 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Room 3 Floor: Terrain (Dark Concrete) -->
+    <model name="floor_terrain">
+      <static>true</static>
+      <pose>10 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.2 0.2 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Room 4 Floor: Stairs (Red Bricks color) -->
+    <model name="floor_stairs">
+      <static>true</static>
+      <pose>10 10 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>10 10 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.6 0.2 0.2 1</ambient>
+            <diffuse>0.6 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- OBSTACLES (Using Local Models) -->
+    
+    <!-- RAMPS -->
+    <include>
+      <uri>model://ramp_15deg</uri>
+      <name>ramp_1</name>
+      <pose>-1.5 10.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://ramp_30deg</uri>
+      <name>ramp_2</name>
+      <pose>1.5 10.0 0 0 0 0</pose>
+    </include>
+
+    <!-- TERRAIN (Negotiate) -->
+    <include>
+      <uri>model://negotiate_terrain</uri>
+      <name>negotiate_terrain</name>
+      <pose>10.0 0.0 0 0 0 0</pose>
+    </include>
+
+    <!-- STAIRS -->
+    <include>
+      <uri>model://stairs_generic</uri>
+      <name>stairs_1</name>
+      <pose>10.0 10.0 0 0 0 0</pose>
+    </include>
+
+    <!-- WALLS / BARRIERS -->
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_h_1</name>
+      <pose>-3.0 5.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_h_2</name>
+      <pose>3.0 5.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_h_3</name>
+      <pose>7.0 5.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_h_4</name>
+      <pose>9.0 5.0 0 0 0 0</pose>
+    </include>
+     <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_h_5</name>
+      <pose>11.0 5.0 0 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_v_1</name>
+      <pose>5.0 -3.0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_v_2</name>
+      <pose>5.0 3.0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_v_3</name>
+      <pose>5.0 7.0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_v_4</name>
+      <pose>5.0 9.0 0 0 0 1.57</pose>
+    </include>
+    <include>
+      <uri>model://jersey_barrier</uri>
+      <name>wall_v_5</name>
+      <pose>5.0 11.0 0 0 0 1.57</pose>
+    </include>
+
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose frame=''>-3 3 5 0 0.5 -0.8</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+  </world>
+</sdf>

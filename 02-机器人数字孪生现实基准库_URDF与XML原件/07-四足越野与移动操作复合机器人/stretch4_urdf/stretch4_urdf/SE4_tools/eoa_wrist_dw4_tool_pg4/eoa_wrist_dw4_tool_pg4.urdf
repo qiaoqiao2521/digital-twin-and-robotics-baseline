@@ -1,0 +1,151 @@
+<robot name="URDF_FRANCIS_ASSEM_Parallel_Jaw_Gripper_V4">
+  <link name="pjg_body_link">
+    <inertial>
+      <origin xyz="0.0398306085599072 1.96210977372467E-05 -0.000457087865085625" rpy="0 0 0" />
+      <mass value="0.392020130813208" />
+      <inertia ixx="0.000517570989593688" ixy="1.79643950390405E-07" ixz="-1.55154618879592E-06" iyy="0.000198357570788461" iyz="3.14085733892799E-10" izz="0.000543476429060308" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/pjg_body_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision name="pjg_body_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/pjg_body_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="finger_right_link">
+    <inertial>
+      <origin xyz="-0.0153471684909367 0.0836878950033816 0.00137896385009943" rpy="0 0 0" />
+      <mass value="0.0284304100497672" />
+      <inertia ixx="9.01556838608522E-06" ixy="1.39885198313295E-08" ixz="-1.07403102415257E-07" iyy="6.43862328040711E-06" iyz="5.4211300365036E-07" izz="6.28679130290647E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision name="finger_right_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="finger_right_joint" type="prismatic">
+    <origin xyz="0.16688 0.0005 0" rpy="0 0 1.5708" />
+    <parent link="pjg_body_link" />
+    <child link="finger_right_link" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="0.0385" effort="0" velocity="0" />
+  </joint>
+  <link name="aruco_fingertip_right_link">
+    <inertial>
+      <origin xyz="1.73472347597681E-18 1.38777878078145E-17 -0.000200000000000002" rpy="0 0 0" />
+      <mass value="0.000132188497698027" />
+      <inertia ixx="3.57066423200758E-09" ixy="-3.76629819094878E-24" ixz="-1.72524508164695E-25" iyy="3.57066423200758E-09" iyz="3.6189151799195E-25" izz="7.13780343740988E-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_right_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_right_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_right_joint" type="fixed">
+    <origin xyz="-0.01325 0.0705221070892628 0.0197477319374859" rpy="0.174532925199433 0 -3.14159265358979" />
+    <parent link="finger_right_link" />
+    <child link="aruco_fingertip_right_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="finger_left_link">
+    <inertial>
+      <origin xyz="-0.0153471507280217 -0.0836878572819353 0.00137899394037041" rpy="0 0 0" />
+      <mass value="0.0284304473699516" />
+      <inertia ixx="9.01558902308676E-06" ixy="-1.39838278175091E-08" ixz="-1.07404079025255E-07" iyy="6.4386201405076E-06" iyz="-5.42117071994351E-07" izz="6.28680764305592E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1" />
+      </material>
+    </visual>
+    <collision name="finger_left_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/finger_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="finger_left_joint" type="prismatic">
+    <origin xyz="0.16688 -0.0005 0" rpy="0 0 -1.5708" />
+    <parent link="pjg_body_link" />
+    <child link="finger_left_link" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="0.0385" effort="0" velocity="0" />
+  </joint>
+  <link name="aruco_fingertip_left_link">
+    <inertial>
+      <origin xyz="1.21430643318376E-17 0 -0.000199999999999999" rpy="0 0 0" />
+      <mass value="0.000132188497698026" />
+      <inertia ixx="3.57066423200756E-09" ixy="3.3015679161479E-25" ixz="-1.39442368753489E-25" iyy="3.57066423200757E-09" iyz="1.03397576569128E-25" izz="7.13780343740985E-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision name="aruco_fingertip_left_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/aruco_fingertip_left_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="aruco_fingertip_left_joint" type="fixed">
+    <origin xyz="-0.0132499999999998 -0.0705221070892628 0.0197477319374844" rpy="0.174532925199433 0 0" />
+    <parent link="finger_left_link" />
+    <child link="aruco_fingertip_left_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="grasp_center_link" />
+  <joint name="grasp_center_joint" type="fixed">
+    <origin xyz="0.166875269271506 0 0" rpy="0 0 0" />
+    <parent link="pjg_body_link" />
+    <child link="grasp_center_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="quick_connect_interface_link" />
+  <joint name="quick_connect_interface_joint" type="fixed">
+    <parent link="quick_connect_interface_link" />
+    <child link="pjg_body_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

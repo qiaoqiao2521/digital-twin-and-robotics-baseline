@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="ramp_15deg">
+    <static>true</static>
+    <link name="link">
+      <pose>0 0 0.2679 0 -0.2618 0</pose> <!-- 0.2618 rad is approx 15 degrees. Height adjust to sit on ground -->
+      <!-- Visual and Collision -->
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>2.0 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>2.0 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.4 0.2 1</ambient>
+            <diffuse>0.6 0.4 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

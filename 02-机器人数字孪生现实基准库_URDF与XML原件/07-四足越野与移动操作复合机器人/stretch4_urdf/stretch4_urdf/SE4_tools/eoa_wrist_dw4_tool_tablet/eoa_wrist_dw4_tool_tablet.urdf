@@ -1,0 +1,24 @@
+<robot name="URDF_FRANCIS_ASSEM_Tablet_Mount_V2">
+  <link name="quick_connect_interface_link">
+    <inertial>
+      <origin xyz="0.0200911916101216 1.87059933264899E-06 -0.0574272838038192" rpy="0 0 0" />
+      <mass value="0.755969840555698" />
+      <inertia ixx="0.00657623820022852" ixy="3.01531508714802E-09" ixz="-1.48067708260352E-07" iyy="0.00203237276410952" iyz="-8.05516381336228E-09" izz="0.00456025331300983" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.298039215686275 0.298039215686275 0.298039215686275 1" />
+      </material>
+    </visual>
+    <collision name="quick_connect_interface_collision_link">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg tool_mesh_dir)/quick_connect_interface_collision_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

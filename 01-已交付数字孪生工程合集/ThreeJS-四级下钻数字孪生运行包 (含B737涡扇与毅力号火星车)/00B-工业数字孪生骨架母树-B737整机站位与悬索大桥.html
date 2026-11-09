@@ -1,0 +1,3949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>工业级 3D 数字孪生底座 — B737-800 & CFM56-7B 四级无损下钻与标准挂载接口系统 (L0→L1→L2→L3)</title>
+  <script src="./vendor/three.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #050912;
+      --bg-panel: rgba(9, 15, 28, 0.90);
+      --bg-card: rgba(15, 23, 42, 0.78);
+      --border-dim: rgba(56, 189, 248, 0.22);
+      --border-bright: rgba(56, 189, 248, 0.65);
+      --accent-cyan: #38bdf8;
+      --accent-gold: #fbbf24;
+      --accent-emerald: #34d399;
+      --accent-crimson: #ef4444;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .workbench-layout {
+      display: grid;
+      grid-template-rows: 58px 1fr;
+      width: 100vw;
+      height: 100vh;
+    }
+    /* Top Header: Domain Switcher + Breadcrumb Hierarchy + CAD Controls */
+    .top-command-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      background: rgba(6, 11, 22, 0.96);
+      border-bottom: 1px solid var(--border-dim);
+      z-index: 20;
+    }
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .brand-tag {
+      padding: 4px 8px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(245, 158, 11, 0.22));
+      border: 1px solid var(--border-bright);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      letter-spacing: 0.04em;
+    }
+    .domain-switcher {
+      display: flex;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 3px;
+      border-radius: 7px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .domain-switch-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .domain-switch-btn.active {
+      background: rgba(56, 189, 248, 0.2);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px var(--accent-cyan);
+    }
+    /* Breadcrumb Bar */
+    .breadcrumb-trail {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+    .crumb-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .crumb-step:hover {
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+    .crumb-step.visited {
+      border-color: rgba(52, 211, 153, 0.45);
+      color: #d1fae5;
+    }
+    .crumb-step.active {
+      background: linear-gradient(90deg, rgba(14, 165, 233, 0.28), rgba(245, 158, 11, 0.22));
+      border-color: var(--accent-gold);
+      color: #fff;
+      font-weight: 600;
+    }
+    .crumb-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.22);
+      color: var(--accent-cyan);
+    }
+    .crumb-step.active .crumb-badge {
+      background: var(--accent-gold);
+      color: #050912;
+    }
+    .crumb-sep {
+      color: #64748b;
+      font-size: 12px;
+    }
+    /* Top Right Controls */
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .explode-control {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 5px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border-dim);
+      font-size: 12px;
+    }
+    .explode-control input[type="range"] {
+      width: 96px;
+      accent-color: var(--accent-gold);
+      cursor: pointer;
+    }
+    .mono-val {
+      font-family: var(--font-mono);
+      color: var(--accent-gold);
+      font-weight: 700;
+      min-width: 36px;
+    }
+    .tool-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-dim);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+    .tool-btn:hover, .tool-btn.active {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.18);
+      color: #fff;
+    }
+
+    /* Main 3-Column Stage */
+    .main-stage {
+      display: grid;
+      grid-template-columns: 320px 1fr 360px;
+      height: calc(100vh - 58px);
+      overflow: hidden;
+    }
+    .side-panel {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-dim);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 12px;
+      gap: 12px;
+      z-index: 10;
+    }
+    .side-panel.right-panel {
+      border-right: none;
+      border-left: 1px solid var(--border-dim);
+    }
+    .panel-section {
+      background: var(--bg-card);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent-cyan);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .tree-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tree-node-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+    .tree-node-item:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(30, 41, 59, 0.85);
+    }
+    .tree-node-item.active {
+      border-color: var(--accent-gold);
+      background: rgba(245, 158, 11, 0.14);
+    }
+    .tree-node-item.port-node {
+      border-left: 3px solid var(--accent-emerald);
+    }
+    .node-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+    .node-datum {
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--accent-cyan);
+    }
+    .drill-tag {
+      flex-shrink: 0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(52, 211, 153, 0.22);
+      border: 1px solid var(--accent-emerald);
+      color: #6ee7b7;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .drill-tag:hover {
+      background: var(--accent-emerald);
+      color: #050912;
+    }
+
+    /* Center 3D Viewport */
+    .center-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    #viewport-canvas-wrap {
+      width: 100%;
+      height: 100%;
+    }
+    .hud-banner {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(6, 11, 22, 0.82);
+      border: 1px solid var(--border-dim);
+      backdrop-filter: blur(8px);
+    }
+    .hud-banner-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .hud-banner-datum {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent-gold);
+    }
+    .hud-banner-summary {
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+    .hud-legend-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 7px;
+      background: rgba(6, 11, 22, 0.84);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    /* Right Inspector & OCR Evidence Drawer */
+    .inspector-field {
+      margin-bottom: 8px;
+    }
+    .field-label {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .field-val {
+      font-size: 12.5px;
+      color: #fff;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .field-val.mono {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--accent-gold);
+      background: rgba(2, 6, 23, 0.65);
+      padding: 4px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(251, 191, 36, 0.28);
+    }
+    .drill-action-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--accent-emerald);
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.28), rgba(14, 165, 233, 0.28));
+      color: #ecfdf5;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .drill-action-btn:hover {
+      background: var(--accent-emerald);
+      color: #050912;
+    }
+    .ocr-box {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: #93c5fd;
+      background: rgba(2, 6, 23, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 6px;
+      padding: 8px;
+      max-height: 145px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+    .ref-item {
+      padding: 6px 0;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.16);
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-code {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--accent-emerald);
+    }
+    .empty-port-note {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="workbench-layout">
+    <!-- Top Navigation & Breadcrumb Hierarchy Bar -->
+    <header class="top-command-bar">
+      <div class="brand-cluster">
+        <span class="brand-tag">INDUSTRIAL TWIN CAD v2.0</span>
+        <div class="domain-switcher">
+          <button class="domain-switch-btn active" data-domain="aircraft">✈️ B737-800 & CFM56 航空母树 (L0→L3)</button>
+          <button class="domain-switch-btn" data-domain="bridge">🌉 悬索大桥主跨与锚碇母树 (Ch.18)</button>
+        </div>
+      </div>
+
+      <nav id="breadcrumb-trail" class="breadcrumb-trail"></nav>
+
+      <div class="toolbar-controls">
+        <div class="explode-control">
+          <span>正交拆解</span>
+          <input id="explode-slider" type="range" min="0" max="100" value="18" />
+          <span id="explode-value" class="mono-val">18%</span>
+        </div>
+        <button id="btn-toggle-explode" class="tool-btn">一键爆炸/合拢</button>
+        <button id="btn-toggle-ruler" class="tool-btn active">CAD 站位标尺</button>
+        <button id="btn-toggle-ghost" class="tool-btn active">父级幽灵线框</button>
+      </div>
+    </header>
+
+    <!-- Main 3-Column Digital Twin Workbench -->
+    <main class="main-stage">
+      <!-- Left Sidebar: Standard MountingPort Slots & Modular Scene Graph -->
+      <aside class="side-panel">
+        <section class="panel-section">
+          <div class="section-header">
+            <span>🔌 标准挂载接口槽位 (MountingPort)</span>
+            <span>点击定位/下钻</span>
+          </div>
+          <div id="mounting-port-list" class="tree-list"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-header">
+            <span>🧩 当前层级结构树 (Scene Graph)</span>
+            <span>FS/BL/WL/Ax.Sta</span>
+          </div>
+          <div id="scene-graph-list" class="tree-list"></div>
+        </section>
+      </aside>
+
+      <!-- Center 3D CAD Viewport -->
+      <section class="center-viewport">
+        <div class="hud-banner">
+          <div id="active-level-banner-title" class="hud-banner-title"></div>
+          <div id="active-level-datum-spec" class="hud-banner-datum"></div>
+          <div id="active-level-summary" class="hud-banner-summary"></div>
+        </div>
+
+        <div id="viewport-canvas-wrap"></div>
+
+        <div class="hud-legend-bar">
+          <div>
+            <span><i class="legend-dot" style="background:#34d399"></i>标准挂载端口 (MountingPort)</span>
+            <span style="margin-left:12px"><i class="legend-dot" style="background:#06b6d4"></i>N1 低压轴系 (Fan + 3-Booster + 4-LPT)</span>
+            <span style="margin-left:12px"><i class="legend-dot" style="background:#f59e0b"></i>N2 高压轴系 (9-HPC + Single-HPT)</span>
+            <span style="margin-left:12px"><i class="legend-dot" style="background:#ef4444"></i>单晶气冷叶片与燃烧室热端</span>
+          </div>
+          <div>操作：左键拖拽旋转 · 右键平移 · 滚轮缩放 · 单击选中零件 · 双击绿色接口下钻</div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar: CAD Datum Inspector & Baidu PP-OCRv4 Blueprint Evidence -->
+      <aside class="side-panel right-panel">
+        <section class="panel-section">
+          <div class="section-header">
+            <span>📐 选中组件 / 接口 CAD 空间基准检视器</span>
+            <span>REAL DATUM</span>
+          </div>
+          <div class="inspector-field">
+            <div class="field-label">组件 / 标准端口名称</div>
+            <div id="inspector-part-title" class="field-val"></div>
+          </div>
+          <div class="inspector-field">
+            <div class="field-label">工业空间基准坐标 (FS / BL / WL / WS / Axial Sta.)</div>
+            <div id="inspector-part-datum" class="field-val mono"></div>
+          </div>
+          <div class="inspector-field">
+            <div class="field-label">接口标准 / 材料牌号与法兰规格</div>
+            <div id="inspector-part-material" class="field-val"></div>
+          </div>
+          <div class="inspector-field">
+            <div class="field-label">工程结构与传力路径说明</div>
+            <div id="inspector-part-desc" class="field-val" style="font-weight:400;color:#cbd5e1;font-size:12px"></div>
+          </div>
+          <button id="inspector-drill-btn" class="drill-action-btn"></button>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-header">
+            <span>📚 真实工业母本图鉴库 (Firecrawl + 百度 PP-OCRv4)</span>
+            <span>4 册权威手册</span>
+          </div>
+          <div class="ref-item">
+            <div><strong>1. Boeing 737-800 Structural Stations Manual</strong></div>
+            <div class="ref-code">ntsb_b737_800_structures_stations.pdf (Fig 1–3)</div>
+            <div style="color:#94a3b8">提取机身隔框 STA 130–1217、水线 WL 148.5–306.5（R=74.0"）及机翼站位 WS 156.25–691.50、短舱中心线 CL NAC WBL 190.97。</div>
+          </div>
+          <div class="ref-item">
+            <div><strong>2. CFMI CFM56 Basic Engine Manual (CTC-044)</strong></div>
+            <div class="ref-code">cfm56_basic_engine_ctc044.pdf (Pages 24, 30, 32, 34)</div>
+            <div style="color:#94a3b8">提取四大主模块、六大核心段、Sump A/B 五主轴承（1#–5#）及 N1/N2 同心双转子轴向站位。</div>
+          </div>
+          <div class="ref-item">
+            <div><strong>3. Rolls-Royce: The Jet Engine (5th Ed.)</strong></div>
+            <div class="ref-code">rolls_royce_the_jet_engine.pdf (Ch.5–6)</div>
+            <div style="color:#94a3b8">提取 L3 高压涡轮三齿枞树形榫槽（Fir-Tree Root）、单晶气膜孔叶片、主动间隙控制（ACC）与环形燃烧室旋流器。</div>
+          </div>
+          <div class="ref-item">
+            <div><strong>4. Wai-Fah Chen: Bridge Engineering Handbook</strong></div>
+            <div class="ref-code">bridge_engineering_handbook_ch18.pdf (Ch.18)</div>
+            <div style="color:#94a3b8">提取悬索桥垂跨比 f/L=1:9.52、门式索塔鞍座、重力式锚碇散索鞍与正交异性扁平闭口钢箱梁 U 肋基准。</div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-header">
+            <span>🔍 百度 PP-OCRv4 图纸站位实测识别流</span>
+            <span>349 处坐标框</span>
+          </div>
+          <div class="ocr-box">
+            <div><strong>[B737 Fig.2 Fuselage Stations OCR]:</strong> SECTION41 · SECTION43 · GALLEYDOOR · (RIGHT SIDE · ONLY)30X65 · -328 · 344 · 259.5 · BL · 332.1 · 0'0 · 420.0 · 9 · 500A · 8 · 5000 · UPPER · -196.5 · 211.8 · 235.8 · 360.0 · 口 · 440. · STA130 · 00 · 460. · 480 · 009</div>
+            <div style="margin-top:6px"><strong>[B737 Fig.3 Wing Stations OCR]:</strong> AIRPLANE,WBL 0.0 · KRUEGERFLAPNO.2LH,3RH · KRUEGERFLAPNO.1LH,4RH · WBL 71.24 · WBL 94.24 · SPOILERNO.6 (22.4X93.6)LH,7 RH · INBD FIXED L.E. · INBOARDFLAP · WS 156.25 · SLAT NO.4 LH, S RH · WS 180.00 · APPROX. · WS 204.25 · FRONT SPAR · WBL · ENAC · 190.97 · SPOILERNO.5(25.6X45.2)LH,8RH · WS 228.25 · OUTBOARD FLAP · WS 253.00 · SPOILER NO.4 (24.9 X 42.5) LH, 9 RH · WS 278.50 · SPOILERNO.3 (24X42.5)LH, 10 RH</div>
+            <div style="margin-top:6px"><strong>[CFM56 CTC-044 Cutaway OCR]:</strong> CFM56-5A · TRAININGMANUAL · THE POWER · OF FLIGHT · LOWPRESSURE · COMPRESSOR · COMBUSTION · (BOOSTER) · ASSEMBLY · HIGHPRESSURE · TURBINE · FAN · LOWPRESSURE · TURBINE · HIGHPRESSURE · COMPRESSOR · INLETGEARBOX · ACCESSORYDRIVE · ENGINEDESIGNANDOPERATION · CTC-044-005-00 · EFFECTIVITY · 72-00-00 · Page 5 · ALLCFM56-5AENGINESFORA319-A320 · April 00 · BASICENGINE · TOC · CFMIPROPRIETARYINFORMATION · CFM56-5A · TRAININGMANUAL · THE POWER · OF FLIGHT · 5BEARINGS · ACCESSORY · LPSYSTEM · DRIVE · 2FRAMES · HPSYSTEM · 2 SUMPS · ENGINEGENERALCONCEPT · CTC-044-006-00 · EFFECTIVITY · 72-00-00 · Page 7 · April 00 · ALLCFM56-5AENGINESFORA319-A320 · BASICENGINE · TOC · CFMIPROPRIETARYINFORMATION · CFM56-5A · TRAININGMANUAL · THE POWER · OF FLIGHT · COREENGINE · MAJORMODULE · FANMAJOR · MODULE · LOWPRESSURETURBINE · MAJORMODULE · ACCESSORYDRIVEMODULE · MODULARDESIGN · CTC-044-007-00 · EFFECTIVITY · 72-00-00 · Page 9 · ALLCFM56-5AENGINESFORA319-A320 · April 00 · BASICENGINE · TOC · CFMIPROPRIETARYINFORMATION</div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module">
+// Three.js loaded via ./vendor/three.min.js (global THREE)
+const THREE = window.THREE;
+
+
+// ============================================================================
+// MODULE: schema/datum-types.js
+// ============================================================================
+/**
+ * Industrial Digital Twin Spatial Datum & MountingPort Schema
+ *
+ * Strictly enforces real-world engineering coordinate systems:
+ * 1. Aircraft Datum (Boeing 737-800 Structural Repair Manual / IPC):
+ *    - FS / STA : Fuselage Station (inches aft of forward datum plane; Nose Radome = STA 130.0)
+ *    - BL / WBL : Buttock Line / Wing Buttock Line (inches left/right of fuselage centerline BL 0.0)
+ *    - WL       : Water Line (inches above horizontal reference datum plane; Crown = WL 306.5, Keel = WL 148.5)
+ *    - WS       : Wing Station (inches along wing front/rear spar sweep axis from WS 156.25 to WS 691.50)
+ *
+ * 2. Turbofan Engine Datum (CFM56-7B CTC-044 / Rolls-Royce The Jet Engine):
+ *    - Engine Axial Station (Sta. 0 Intake, Sta. 12 Fan Frame, Sta. 25 HPC Inlet, Sta. 3 Combustor Inlet,
+ *      Sta. 4 HPT Inlet, Sta. 495 LPT Inlet, Sta. 5 Turbine Rear Frame, Sta. 8 Core Nozzle)
+ *    - Radial Pitch Circle Radius (mm / inches from engine N1/N2 coaxial centerline)
+ *    - Circumferential Clocking Angle (deg / o'clock position looking forward, e.g., 6 o'clock AGB drive)
+ *
+ * 3. Suspension Bridge Datum (Wai-Fah Chen Bridge Engineering Handbook Ch. 18):
+ *    - Chainage / Station (K+m along main bridge longitudinal axis)
+ *    - Elevation (EL in meters above mean sea level)
+ *    - Transverse Offset (CL in meters from deck centerline)
+ */
+const INCH_TO_METER = 0.0254;
+const SCALE_3D = 0.25; // 1 meter = 0.25 Three.js world units for ergonomic CAD inspection
+
+/**
+ * Converts Boeing 737-800 (STA, BL, WL) inches into Three.js world coordinates (X, Y, Z)
+ * Center of model reference: STA 601.875 (Wing Center Box midpoint), BL 0.0, WL 208.1 (Main Cabin Floor Line)
+ * - X axis: Longitudinal (aft is +X, nose is -X)
+ * - Y axis: Vertical (up is +Y, down is -Y)
+ * - Z axis: Lateral (right/starboard wing is +Z, left/port wing is -Z)
+ */
+function fsBlWlToWorld(staIn, blIn, wlIn) {
+  const refSta = 601.875;
+  const refWl = 208.1;
+  const xMeters = (staIn - refSta) * INCH_TO_METER;
+  const yMeters = (wlIn - refWl) * INCH_TO_METER;
+  const zMeters = blIn * INCH_TO_METER;
+  return {
+    x: +(xMeters * SCALE_3D).toFixed(4),
+    y: +(yMeters * SCALE_3D).toFixed(4),
+    z: +(zMeters * SCALE_3D).toFixed(4),
+    xMeters: +xMeters.toFixed(3),
+    yMeters: +yMeters.toFixed(3),
+    zMeters: +zMeters.toFixed(3),
+    datumLabel: `STA ${staIn.toFixed(1)} | BL ${blIn >= 0 ? '+' : ''}${blIn.toFixed(2)} | WL ${wlIn.toFixed(1)}`
+  };
+}
+
+/**
+ * Converts Engine Local Axial Station (mm aft of Fan Spinner Tip Sta. 0) and Radial/Clocking
+ * into offset coordinates relative to the Engine Mounting Datum.
+ */
+function engineStationToLocal(axialMm, radiusMm = 0, clockDeg = 0) {
+  const rad = (clockDeg * Math.PI) / 180;
+  const xMeters = axialMm / 1000;
+  const yMeters = (radiusMm / 1000) * Math.cos(rad);
+  const zMeters = (radiusMm / 1000) * Math.sin(rad);
+  return {
+    x: +(xMeters * SCALE_3D).toFixed(4),
+    y: +(yMeters * SCALE_3D).toFixed(4),
+    z: +(zMeters * SCALE_3D).toFixed(4),
+    datumLabel: `Ax.Sta +${axialMm}mm | R=${radiusMm}mm @ ${clockDeg}°`
+  };
+}
+
+/**
+ * Converts Suspension Bridge (Chainage m, Elevation m, Transverse Offset m) into Three.js world coordinates
+ */
+function bridgeDatumToWorld(chainageM, elevationM, offsetClM) {
+  const bridgeScale = 0.014; // 1000m main span -> 14 world units
+  const refChainage = 1000.0; // K1+000 Midspan
+  const refEl = 65.0; // Deck Reference Elevation +65.0m
+  return {
+    x: +((chainageM - refChainage) * bridgeScale).toFixed(4),
+    y: +((elevationM - refEl) * bridgeScale).toFixed(4),
+    z: +(offsetClM * bridgeScale).toFixed(4),
+    datumLabel: `K${Math.floor(chainageM / 1000)}+${String(Math.round(chainageM % 1000)).padStart(3, '0')} | EL +${elevationM.toFixed(1)}m | CL ${offsetClM >= 0 ? '+' : ''}${offsetClM.toFixed(1)}m`
+  };
+}
+
+/**
+ * Validates a MountingPort contract between a parent slot and a child subsystem module.
+ */
+function verifyMountingPortMate(parentPort, childPort) {
+  return {
+    portId: parentPort.id,
+    interfaceStandard: parentPort.interfaceStandard,
+    parentDatum: parentPort.datumCoord,
+    boltCircleMm: parentPort.boltCircleMm,
+    loadVector: parentPort.loadTransferAxes.join(', '),
+    isCompatible: parentPort.id === childPort.parentPortId
+  };
+}
+
+
+// ============================================================================
+// MODULE: data/b737-cfm56-datum.js
+// ============================================================================
+/**
+ * Real-World Industrial Spatial Datum Library
+ *
+ * All coordinates are derived from official engineering manuals in `../references/`:
+ * 1. `ntsb_b737_800_structures_stations.pdf` (Boeing 737-800 Figure 1 3-View, Figure 2 Fuselage Stations, Figure 3 Wing Stations)
+ * 2. `cfm56_basic_engine_ctc044.pdf` (CFMI Training Manual CTC-044: 4 Major Modules, 6 Core Sections, 5 Main Bearings, 2 Concentric Shafts)
+ * 3. `rolls_royce_the_jet_engine.pdf` (Rolls-Royce: High-Pressure Turbine Fir-Tree Blade Roots, Active Clearance Control & Annular Combustor)
+ * 4. `bridge_engineering_handbook_ch18_suspension_bridges.pdf` (Wai-Fah Chen Ch.18 Suspension Bridge Datum System)
+ */
+const B737_800_DATUM = {
+  aircraftModel: 'Boeing 737-800 (Twin-Turbofan Narrow-Body Airliner)',
+  referenceManual: 'Boeing 737-800 Structural Repair Manual (SRM) / IPC Figures 1–3',
+  overallDimensions: {
+    lengthM: 39.47,        // 129 ft 6 in
+    wingspanM: 34.31,      // 112 ft 7 in (WBL -680.40 to +680.40)
+    tailHeightM: 12.55,    // 41 ft 2 in
+    fuselageWidthIn: 148.0, // R = 74.0 in upper lobe radius (3.76 m)
+    fuselageHeightIn: 158.0, // WL 148.5 to WL 306.5 (4.01 m)
+    nacelleGroundClearanceIn: 18.0 // 1 ft 6 in minimum ground clearance
+  },
+  waterLines: {
+    keelBottom: 148.5,
+    lowerBilge: 176.0,
+    cabinFloorTop: 208.1,
+    windowBeltLower: 232.5,
+    windowBeltUpper: 246.1,
+    lobeCenterUpper: 232.5,
+    crownTop: 306.5,
+    finTip: 642.0
+  },
+  buttockLines: {
+    centerline: 0.0,
+    sideOfBodyRib: 71.24,
+    fuselageMaxHalfWidth: 74.0,
+    nacelleCenterline: 190.97, // CL NAC APPROX. WBL 190.97 (4.85 m)
+    mainGearTrunnion: 162.5,
+    wingtip: 680.40,
+    horizontalTailTip: 282.5
+  },
+  fuselageSections: [
+    {
+      id: 'SEC-41',
+      name: 'Section 41 — Nose Radome, Flight Deck & Forward Electronics Bay',
+      staStart: 130.0,
+      staEnd: 360.0,
+      color: 0x38bdf8,
+      keyStations: [
+        { sta: 130.0, role: 'Nose Radome Apex & Weather Radar Bulkhead' },
+        { sta: 178.0, role: 'Forward Pressure Bulkhead (Dome)' },
+        { sta: 224.8, role: 'Nose Landing Gear (NLG) Wheel Well & Trunnion Bulkhead' },
+        { sta: 259.5, role: 'Flight Deck Control Pedestal & Windshield Frame' },
+        { sta: 291.5, role: 'Forward Entry / Galley Service Door Frame Cutout' },
+        { sta: 360.0, role: 'Section 41 / 43 Production Splice Ring Frame' }
+      ]
+    },
+    {
+      id: 'SEC-43',
+      name: 'Section 43 — Forward Passenger Cabin & Lower Cargo Hold',
+      staStart: 360.0,
+      staEnd: 540.0,
+      color: 0x60a5fa,
+      keyStations: [
+        { sta: 360.0, role: 'Sec 41/43 Splice Frame' },
+        { sta: 400.0, role: 'Forward Cabin Ring Frame & Floor Beam' },
+        { sta: 440.0, role: 'Forward Lower Cargo Door Frame' },
+        { sta: 480.0, role: 'Mid-Forward Ring Frame' },
+        { sta: 500.0, role: 'Forward Overwing Frame' },
+        { sta: 540.0, role: 'Section 43 / 44 Production Splice & Wing Front Spar Bulkhead' }
+      ]
+    },
+    {
+      id: 'SEC-44',
+      name: 'Section 44 — Wing Center Section, Keel Beam & Overwing Exit Frames',
+      staStart: 540.0,
+      staEnd: 727.0,
+      color: 0xf59e0b,
+      keyStations: [
+        { sta: 540.0, role: 'Center Wing Box Front Spar Bulkhead (Heavy Forged Frame)' },
+        { sta: 578.0, role: 'Type III Overwing Emergency Exit Forward Frame' },
+        { sta: 601.8, role: 'Center Wing Box Mid-Span Rib & Keel Beam Box Web' },
+        { sta: 635.0, role: 'Type III Overwing Emergency Exit Aft Frame' },
+        { sta: 663.75, role: 'Center Wing Box Rear Spar Bulkhead (Primary Bending Carry-Through)' },
+        { sta: 706.26, role: 'Main Landing Gear (MLG) Trunnion Support Beam & Wheel Well Aft Wall' },
+        { sta: 727.0, role: 'Section 44 / 46 Production Splice Ring Frame' }
+      ]
+    },
+    {
+      id: 'SEC-46',
+      name: 'Section 46 — Aft Passenger Cabin & Aft Cargo Bay',
+      staStart: 727.0,
+      staEnd: 887.0,
+      color: 0x34d399,
+      keyStations: [
+        { sta: 727.0, role: 'Sec 44/46 Splice Frame' },
+        { sta: 767.0, role: 'Aft Cabin Ring Frame' },
+        { sta: 807.0, role: 'Aft Lower Cargo Door Frame Cutout' },
+        { sta: 847.0, role: 'Aft Cabin Ring Frame' },
+        { sta: 887.0, role: 'Section 46 / 47 Splice Frame' }
+      ]
+    },
+    {
+      id: 'SEC-47',
+      name: 'Section 47 — Rear Entry Door Bay & Hemispherical Aft Pressure Bulkhead',
+      staStart: 887.0,
+      staEnd: 1016.0,
+      color: 0xa78bfa,
+      keyStations: [
+        { sta: 887.0, role: 'Sec 46/47 Splice Frame' },
+        { sta: 947.5, role: 'Aft Passenger / Service Door Cutout Frame' },
+        { sta: 1016.0, role: 'Aft Hemispherical Pressure Bulkhead & Fin Front Spar Root' }
+      ]
+    },
+    {
+      id: 'SEC-48',
+      name: 'Section 48 — Empennage Support Structure, Stabilizer Jackscrew & APU Compartment',
+      staStart: 1016.0,
+      staEnd: 1217.0,
+      color: 0xf472b6,
+      keyStations: [
+        { sta: 1016.0, role: 'Unpressurized Tailcone Forward Frame' },
+        { sta: 1068.0, role: 'Vertical Fin Rear Spar & Horizontal Stabilizer Hinge Bulkhead' },
+        { sta: 1126.0, role: 'APU Firewall Bulkhead' },
+        { sta: 1156.0, role: 'Garrett/Honeywell 131-9B APU Mounting Trunnion Station' },
+        { sta: 1217.0, role: 'APU Exhaust Tailcone Tip' }
+      ]
+    }
+  ],
+
+  /**
+   * Wing Stations (WS) & Wing Buttock Lines (WBL) from Figure 3 of NTSB B737-800 Report
+   */
+  wingRibStations: [
+    { ribNo: 1, wbl: 71.24, ws: 156.25, role: 'Side-of-Body Root Rib (Fuselage Mate)' },
+    { ribNo: 2, wbl: 98.50, ws: 180.00, role: 'Inboard Krueger Flap Rib' },
+    { ribNo: 3, wbl: 190.97, ws: 204.25, role: 'Engine Pylon & Nacelle Primary Mounting Rib (CL NAC WBL 190.97)' },
+    { ribNo: 4, wbl: 215.00, ws: 228.25, role: 'Outboard Nacelle Strut Rib' },
+    { ribNo: 5, wbl: 242.00, ws: 253.00, role: 'Wing Planform Yehudi Break / MLG Support Rib' },
+    { ribNo: 6, wbl: 270.00, ws: 278.50, role: 'Inboard Slat / Flap Track #2 Rib' },
+    { ribNo: 8, wbl: 318.00, ws: 326.00, role: 'Mid-Wing Fuel Tank Baffle Rib' },
+    { ribNo: 11, wbl: 392.00, ws: 405.50, role: 'Outboard Flap Track #3 Rib' },
+    { ribNo: 14, wbl: 472.00, ws: 485.00, role: 'Inboard Aileron Hinge Rib' },
+    { ribNo: 18, wbl: 576.00, ws: 591.50, role: 'Surge Tank Rib' },
+    { ribNo: 22, wbl: 680.40, ws: 691.50, role: 'Wingtip Closure & Blended Winglet Root Rib' }
+  ],
+
+  /**
+   * Standard MountingPort Registry on L0 Airframe
+   * Every port specifies exact FS/BL/WL coordinates, flange bolt circle, normal vector, and load transfer axes.
+   */
+  mountingPorts: [
+    {
+      id: 'PORT-PYLON-LH',
+      name: '左翼动力短舱与吊架主挂载端口 (LH Wing-to-Pylon Mounting Interface)',
+      interfaceStandard: 'Boeing D6-51991 / ATA 54-10 Over-Wing-Torque-Box 4-Pin Fuse Mount',
+      parentLevel: 'L0',
+      childLevel: 'L1',
+      compatibleModuleId: 'MOD-L1-PYLON-LH',
+      staIn: 518.0,
+      blIn: -190.97,
+      wlIn: 192.0,
+      wsIn: 204.25,
+      toeInDeg: 1.0,
+      boltCircleMm: 420,
+      fusePinDiaMm: 69.85,
+      loadTransferAxes: ['Fx (Thrust)', 'Fy (Side)', 'Fz (Vertical Weight)', 'Mx (Roll)', 'My (Pitch)', 'Mz (Yaw)'],
+      worldPos: fsBlWlToWorld(518.0, -190.97, 192.0),
+      description: '位于左翼前梁 WS 204.25 / WBL -190.97 处，采用四组保险销（Fuse Pins）将吊架扭矩盒（Pylon Torque Box）与机翼前梁上/下接头及翼肋腹板连接，设计有碰撞过载自动脱开保护。'
+    },
+    {
+      id: 'PORT-PYLON-RH',
+      name: '右翼动力短舱与吊架挂载端口 (RH Wing-to-Pylon Interface)',
+      interfaceStandard: 'Boeing D6-51991 / ATA 54-10 Symmetrical Port',
+      parentLevel: 'L0',
+      childLevel: 'L1',
+      compatibleModuleId: 'MOD-L1-PYLON-RH',
+      staIn: 518.0,
+      blIn: 190.97,
+      wlIn: 192.0,
+      wsIn: 204.25,
+      toeInDeg: -1.0,
+      boltCircleMm: 420,
+      fusePinDiaMm: 69.85,
+      loadTransferAxes: ['Fx (Thrust)', 'Fy (Side)', 'Fz (Vertical Weight)', 'Mx', 'My', 'Mz'],
+      worldPos: fsBlWlToWorld(518.0, 190.97, 192.0),
+      description: '右翼对称发动机吊架接口（WBL +190.97 / WS 204.25）。'
+    },
+    {
+      id: 'PORT-MLG-LH',
+      name: '左主起落架耳轴挂载舱 (LH Main Landing Gear Trunnion Port)',
+      interfaceStandard: 'ATA 32-11 Cantilevered MLG Trunnion & Drag Strut Socket',
+      parentLevel: 'L0',
+      childLevel: 'L1-EXT',
+      compatibleModuleId: 'MOD-L1-MLG-LH',
+      staIn: 706.26,
+      blIn: -162.5,
+      wlIn: 182.0,
+      wsIn: 253.0,
+      boltCircleMm: 380,
+      loadTransferAxes: ['Fz (Landing Impact)', 'Fx (Braking Drag)', 'Fy (Side Drift)'],
+      worldPos: fsBlWlToWorld(706.26, -162.5, 182.0),
+      description: '位于中央翼盒后方 STA 706.26 主起落架承力梁与机翼后梁之间，承载着陆冲击与刹车纵向载荷。'
+    },
+    {
+      id: 'PORT-NLG-FWD',
+      name: '前起落架耳轴挂载舱 (Nose Landing Gear Trunnion Port)',
+      interfaceStandard: 'ATA 32-21 NLG Trunnion & Lock Link Interface',
+      parentLevel: 'L0',
+      childLevel: 'L1-EXT',
+      compatibleModuleId: 'MOD-L1-NLG',
+      staIn: 224.8,
+      blIn: 0.0,
+      wlIn: 166.0,
+      boltCircleMm: 290,
+      loadTransferAxes: ['Fz (Nose Load)', 'Fx (Towing/Taxi)', 'Mz (Steering Torque)'],
+      worldPos: fsBlWlToWorld(224.8, 0.0, 166.0),
+      description: '位于 Section 41 前机身 STA 224.8 / BL 0.0 前起落架舱壁。'
+    },
+    {
+      id: 'PORT-APU-TAIL',
+      name: '尾椎 APU 辅助动力装置挂载舱 (Tailcone APU Firewall Mount Port)',
+      interfaceStandard: 'ATA 49-10 3-Point Vibration Isolator Trunnion Mount',
+      parentLevel: 'L0',
+      childLevel: 'L1-EXT',
+      compatibleModuleId: 'MOD-L1-APU-131-9B',
+      staIn: 1156.0,
+      blIn: 0.0,
+      wlIn: 242.0,
+      boltCircleMm: 310,
+      loadTransferAxes: ['Fx', 'Fy', 'Fz'],
+      worldPos: fsBlWlToWorld(1156.0, 0.0, 242.0),
+      description: '位于 Section 48 尾椎防火墙（STA 1126）后方 STA 1156 处，挂载 Honeywell 131-9B 辅助动力装置。'
+    }
+  ]
+};
+
+/**
+ * L1 Wing Pylon & Nacelle Assembly Datum (ATA 54 / ATA 71)
+ */
+const L1_PYLON_NACELLE_DATUM = {
+  moduleId: 'MOD-L1-PYLON-LH',
+  name: 'L1 左翼吊架扭矩盒与短舱总成 (B737-800 Wing Pylon & Nacelle System)',
+  referenceManual: 'Boeing 737-800 IPC ATA 54 (Nacelles/Pylons) & ATA 71 (Powerplant)',
+  parentPortId: 'PORT-PYLON-LH',
+  originStaIn: 452.0, // Forward lip of inlet cowl at STA 452.0, Fan Frame at STA 492.0, Rear Mount at STA 556.0
+  originBlIn: -190.97,
+  originWlIn: 162.0,  // Engine centerline WL 162.0 (30 inches below wing front spar WL 192.0)
+  subcomponents: [
+    {
+      id: 'PYLON-TORQUE-BOX',
+      code: 'ATA 54-11',
+      name: '钛合金主承力吊架扭矩盒 (Titanium Pylon Primary Torque Box & Upper Link)',
+      axialOffsetMm: 1450,
+      verticalOffsetMm: 720,
+      explodeVec: { x: 0, y: 1.35, z: 0 },
+      material: 'Ti-6Al-4V Forged Bulkheads + Inconel 718 Aft Heat Shield',
+      description: '连接机翼前梁（WS 204.25）与发动机前/后安装节的主传力盒段，内设防火隔舱、引气导管与液压/燃油断开接头。'
+    },
+    {
+      id: 'THRUST-STRUT-PAIR',
+      code: 'ATA 71-22',
+      name: '双斜向推力拉杆与球铰横梁 (Diagonal Thrust Links & Whiffletree Balance Beam)',
+      axialOffsetMm: 1200,
+      verticalOffsetMm: 460,
+      explodeVec: { x: -0.3, y: 0.95, z: 0 },
+      material: '15-5PH High-Strength Precipitation Hardening Stainless Steel',
+      description: '将 CFM56 风扇机匣 12 点钟位置的轴向推力（Fx = 121.4 kN）传递至吊架扭矩盒底部，通过平衡横梁消除偏心弯矩。'
+    },
+    {
+      id: 'INLET-COWL',
+      code: 'ATA 71-11',
+      name: '短舱进气道唇口与消音内筒 (Acoustic Inlet Cowl & Thermal Anti-Ice Lip)',
+      axialOffsetMm: 0,
+      verticalOffsetMm: 0,
+      explodeVec: { x: -1.6, y: 0, z: 0 },
+      material: '2219 Aluminum Spin-Formed Lip + Graphite/Epoxy Acoustic Honeycomb Barrel',
+      description: '位于发动机 Sta. 0 前方，内含热空气防冰笛管（Piccolo Tube）与双自由度穿孔吸音蜂窝夹层。'
+    },
+    {
+      id: 'FAN-COWL-LH',
+      code: 'ATA 71-13-L',
+      name: '左侧风扇包皮舱门 (Left Hand Hinged Fan Cowl Door)',
+      axialOffsetMm: 820,
+      verticalOffsetMm: 0,
+      explodeVec: { x: 0, y: 0.25, z: -1.45 },
+      material: 'Carbon Fiber Reinforced Polymer (CFRP) Sandwich Panel',
+      description: '铰接于吊架上缘，打开角度可达 55°，完全暴露 CFM56 风扇机匣与 6 点钟附件机匣（AGB）供航线维护。'
+    },
+    {
+      id: 'FAN-COWL-RH',
+      code: 'ATA 71-13-R',
+      name: '右侧风扇包皮舱门 (Right Hand Hinged Fan Cowl Door)',
+      axialOffsetMm: 820,
+      verticalOffsetMm: 0,
+      explodeVec: { x: 0, y: 0.25, z: 1.45 },
+      material: 'Carbon Fiber Reinforced Polymer (CFRP) Sandwich Panel',
+      description: '右侧铰接风扇包皮舱门，底部设三组承力拉扣（Tension Latches）与左侧包皮锁紧成环向箍。'
+    },
+    {
+      id: 'TR-CDUCT-PAIR',
+      code: 'ATA 78-31',
+      name: 'C型反推力装置与叶栅套筒总成 (Translating Sleeve C-Duct Thrust Reverser)',
+      axialOffsetMm: 1850,
+      verticalOffsetMm: 0,
+      explodeVec: { x: 0.85, y: -0.2, z: -1.1 },
+      material: 'Aluminum-Graphite Composite Translating Cowl + Magnesium/Composite Turning Cascades',
+      description: '由液压作动筒驱动后移，展开阻流门（Blocker Doors）封闭外涵道，使涵道气流经周向偏转叶栅向前排出产生反推力。'
+    }
+  ],
+  childMountingPorts: [
+    {
+      id: 'PORT-ENG-FWD-STA12',
+      name: '发动机前安装节接口 (Forward Engine Mount @ Fan Frame Sta. 12)',
+      interfaceStandard: 'CFMI CTC-044 / ATA 71-21 Forward Cone Bolt & Clevis Interface',
+      parentLevel: 'L1',
+      childLevel: 'L2',
+      compatibleModuleId: 'MOD-L2-CFM56-7B',
+      engineAxialMm: 780, // Fan Frame 12 o'clock flange
+      radiusMm: 810,
+      clockDeg: 0,
+      boltCircleMm: 260,
+      loadTransferAxes: ['Fy (Lateral Side Load)', 'Fz (Forward Vertical Weight)', 'Fx (via Dual Thrust Links)'],
+      description: '刚性对位 CFM56 风扇框架（Fan Frame Sta. 12）12 点钟外环凸缘，承担前部垂直载荷、侧向载荷与全部轴向推力。'
+    },
+    {
+      id: 'PORT-ENG-AFT-STA5',
+      name: '发动机后安装节接口 (Aft Engine Mount @ Turbine Rear Frame Sta. 5)',
+      interfaceStandard: 'CFMI CTC-044 / ATA 71-22 Rear Tangential Link & Torque Restraint',
+      parentLevel: 'L1',
+      childLevel: 'L2',
+      compatibleModuleId: 'MOD-L2-CFM56-7B',
+      engineAxialMm: 2290, // Turbine Rear Frame 12 o'clock flange
+      radiusMm: 495,
+      clockDeg: 0,
+      boltCircleMm: 220,
+      loadTransferAxes: ['Fz (Rear Vertical Weight)', 'Fy (Rear Side Load)', 'Mx (Engine Roll Torque Reaction)'],
+      description: '对位涡轮后框架（TRF Sta. 5）12 点钟安装凸耳，承受后部垂直/侧向载荷与转子反扭矩（Mx），同时释放轴向热膨胀（ΔX）。'
+    }
+  ]
+};
+
+/**
+ * L2 CFM56-7B Turbofan Engine 4 Major Modules / 6 Core Functional Sections + 5 Bearings + 2 Shafts
+ * Directly transcribed from CFMI Training Manual `cfm56_basic_engine_ctc044.pdf` Pages 24, 30, 32, 34
+ */
+const L2_CFM56_DATUM = {
+  moduleId: 'MOD-L2-CFM56-7B',
+  name: 'L2 CFM56-7B27 双转子大涵道比涡扇发动机 (6 Core Sections + 5 Bearings + N1/N2 Spools)',
+  referenceManual: 'CFMI Official Manual CTC-044 (Pages 24, 30, 32, 34) & Rolls-Royce The Jet Engine',
+  parentPortIds: ['PORT-ENG-FWD-STA12', 'PORT-ENG-AFT-STA5'],
+  specs: {
+    bypassRatio: '5.1 : 1',
+    overallPressureRatio: '32.8 : 1',
+    maxTakeoffThrustKn: 121.4, // 27,300 lbf
+    fanDiameterMm: 1549,       // 61.0 inches
+    overallLengthMm: 2508,     // 98.7 inches
+    n1LpMaxRpm: 5380,          // 100% N1 = 5175 RPM
+    n2HpMaxRpm: 15183          // 100% N2 = 14460 RPM
+  },
+  bearingsAndSumps: [
+    { id: 'BRG-1', number: 1, type: 'Ball Bearing (Thrust + Radial)', rotor: 'N1 (LP Shaft)', sump: 'Forward Sump A (Fan Frame)', axialMm: 460, radiusMm: 155 },
+    { id: 'BRG-2', number: 2, type: 'Roller Bearing (Radial)', rotor: 'N1 (LP Shaft)', sump: 'Forward Sump A (Fan Frame)', axialMm: 640, radiusMm: 165 },
+    { id: 'BRG-3', number: 3, type: 'Duplex Ball + Roller Bearing (HP Thrust + Radial)', rotor: 'N2 (HP Shaft)', sump: 'Forward Sump A (Rear Cone)', axialMm: 830, radiusMm: 205 },
+    { id: 'BRG-4', number: 4, type: 'Intershaft / Rear HP Roller Bearing', rotor: 'N2 (HP Shaft Aft)', sump: 'Rear Sump B (TRF Centerbody)', axialMm: 1840, radiusMm: 190 },
+    { id: 'BRG-5', number: 5, type: 'Rear LP Roller Bearing', rotor: 'N1 (LP Shaft Aft)', sump: 'Rear Sump B (TRF Centerbody)', axialMm: 2220, radiusMm: 150 }
+  ],
+  coreSections: [
+    {
+      id: 'SEC-M1-FAN-BOOSTER',
+      majorModule: '1. Fan Major Module (Blue in CTC-044 p.34)',
+      name: 'M1 风扇转子、三级低压增压级与风扇主承力框架 (Fan, 3-Stage Booster & Fan Frame)',
+      stationCode: 'Sta. 0 → Sta. 25',
+      axialStartMm: 0,
+      axialEndMm: 860,
+      outerRadiusMm: 774.5, // 1549mm diameter
+      innerRadiusMm: 160,
+      bladeCount: 24, // 24 wide-chord titanium fan blades
+      boosterStages: 3,
+      ogvStruts: 12, // 12 radial structural struts in Fan Frame
+      explodeAxialMm: -720,
+      explodeRadialMm: 0,
+      color: 0x38bdf8,
+      description: '包含 24 片宽弦实心钛合金风扇叶片（Ti-6Al-4V）、与风扇同轴旋转的 3 级低压增压压气机（LPC Booster）、12 根径向支板组成的风扇承力框架（Fan Frame，顶置前安装节 @ Sta. 12），以及前滑油腔 Sump A 内的 1# 滚珠轴承与 2# 滚柱轴承。'
+    },
+    {
+      id: 'SEC-M2-HPC-9STAGE',
+      majorModule: '2. Core Engine Major Module — Forward (Red in CTC-044 p.34)',
+      name: 'M2 九级高压压气机与可变静子叶片系统 (9-Stage High-Pressure Compressor & VSV)',
+      stationCode: 'Sta. 25 → Sta. 3',
+      axialStartMm: 860,
+      axialEndMm: 1460,
+      outerRadiusMm: 430,
+      innerRadiusMm: 210,
+      stages: 9,
+      vsvStages: 'IGV + Stages 1, 2, 3 Variable Stator Vanes',
+      explodeAxialMm: -260,
+      explodeRadialMm: 0,
+      color: 0x60a5fa,
+      description: '由高压转子（N2）驱动的 9 级轴流式高压压气机，前端设 3# 推力滚珠/滚柱组合轴承，进气导流叶片（IGV）与前 3 级静子采用电液伺服作动环联动调节迎角以防止喘振，第 4 级与第 9 级提供飞机引气与涡轮叶片冷却气源。'
+    },
+    {
+      id: 'SEC-M3-COMBUSTOR',
+      majorModule: '2. Core Engine Major Module — Mid (Red in CTC-044 p.34)',
+      name: 'M3 短环形燃烧室与 20 支旋流燃油喷嘴 (Short Annular Combustion Chamber)',
+      stationCode: 'Sta. 3 → Sta. 39',
+      axialStartMm: 1460,
+      axialEndMm: 1730,
+      outerRadiusMm: 455,
+      innerRadiusMm: 255,
+      fuelNozzleCount: 20,
+      explodeAxialMm: 120,
+      explodeRadialMm: 0,
+      color: 0xf59e0b,
+      description: '高压压气机出口扩压器（Sta. 3）后方的短环形燃烧室，周向均布 20 支双油路雾化燃油喷嘴与文丘里旋流器，内外火焰筒采用多层气膜冷却（Film Cooling Louvers）承受 2000°C 核心火焰。支持点击下钻至 L3。'
+    },
+    {
+      id: 'SEC-M4-HPT-SINGLE',
+      majorModule: '2. Core Engine Major Module — Aft (Red in CTC-044 p.34)',
+      name: 'M4 单级高功高压涡轮与主动间隙控制环 (Single-Stage High-Pressure Turbine & ACC)',
+      stationCode: 'Sta. 4 → Sta. 42',
+      axialStartMm: 1730,
+      axialEndMm: 1910,
+      outerRadiusMm: 465,
+      innerRadiusMm: 230,
+      rotorBladeCount: 72,
+      ngvVaneCount: 42,
+      explodeAxialMm: 420,
+      explodeRadialMm: 0,
+      color: 0xef4444,
+      drillDownTargetId: 'MOD-L3-HPT-CORE',
+      description: '全机热负荷与离心应力最高的核心模块：由 1 级高压涡轮导向器（NGV）与 72 片单晶气冷涡轮叶片（Rene N5 枞树形榫头 Fir-Tree Root）组成，直接驱动 9 级高压压气机（N2 = 15,183 RPM）。支持下钻进入 L3 叶片榫槽与冷却通道级拆解！'
+    },
+    {
+      id: 'SEC-M5-LPT-TRF',
+      majorModule: '3. Low-Pressure Turbine Major Module (Yellow in CTC-044 p.34)',
+      name: 'M5 四级低压涡轮与涡轮后承力框架 (4-Stage LPT & Turbine Rear Frame TRF)',
+      stationCode: 'Sta. 495 → Sta. 5 → Sta. 8',
+      axialStartMm: 1910,
+      axialEndMm: 2508,
+      outerRadiusMm: 530,
+      innerRadiusMm: 165,
+      stages: 4,
+      explodeAxialMm: 820,
+      explodeRadialMm: 0,
+      color: 0xa78bfa,
+      description: '4 级低压涡轮膨胀提取燃气剩余能量，通过贯穿整机中心的同心内轴（N1 LP Shaft）驱动前端 1.55m 钛合金风扇与 3 级增压级。尾部涡轮后框架（TRF Sta. 5）支承后滑油腔 Sump B（4# 与 5# 滚柱轴承）及发动机后安装节。'
+    },
+    {
+      id: 'SEC-M6-ACCESSORY-AGB',
+      majorModule: '4. Accessory Drive Major Module (Green in CTC-044 p.34)',
+      name: 'M6 中央锥齿轮箱、径向传动轴与附件齿轮箱 (IGB, Radial Drive Shaft & AGB)',
+      stationCode: 'Sta. 12 @ 6:00 Clocking',
+      axialStartMm: 480,
+      axialEndMm: 1120,
+      outerRadiusMm: 840,
+      innerRadiusMm: 195,
+      clockDeg: 180, // 6 o'clock bottom of fan case
+      explodeAxialMm: -180,
+      explodeRadialMm: -520,
+      color: 0x10b981,
+      description: '从高压转子（N2）前端经中央进气齿轮箱（IGB 锥齿轮副）引出功率，通过穿过风扇框架 6 点钟空心支板的径向传动轴（RDS）驱动转换齿轮箱（TGB）与弧形附件齿轮箱（AGB：挂载 IDG 发电机、液压泵、燃油泵与气动起动机）。'
+    }
+  ],
+  childMountingPorts: [
+    {
+      id: 'PORT-HPT-ROTOR-SPLINE',
+      name: '高压涡轮盘与 N2 鼓筒轴法兰接口 (HPT Rotor Disk-to-HP Shaft Curvic/Flange Coupling)',
+      interfaceStandard: 'CFMI CTC-044 / Rolls-Royce Curvic Coupling & 72-Slot Fir-Tree Rim',
+      parentLevel: 'L2',
+      childLevel: 'L3',
+      compatibleModuleId: 'MOD-L3-HPT-CORE',
+      engineAxialMm: 1820,
+      radiusMm: 345,
+      clockDeg: 0,
+      boltCircleMm: 410,
+      loadTransferAxes: ['Mx (Shaft Torque 42,000 N·m)', 'Fx (Axial Gas Load)', 'Fr (Centrifugal Rim Tension)'],
+      description: '位于发动机轴向站位 Sta. 4（+1820mm），通过高精度端面弧齿（Curvic Coupling）与高强度螺栓圆周连接高压涡轮盘与 N2 高压轴后锥体。点击此接口或 M4 模块可直接下钻进入 L3 高压涡轮与燃烧室微观级拆解。'
+    }
+  ]
+};
+
+/**
+ * L3 High-Pressure Turbine (HPT) & Annular Combustor Micro-Assembly Datum
+ * Based on Rolls-Royce "The Jet Engine" Turbine & Combustor chapters + CFM56 CTC-044 Page 30/32
+ */
+const L3_HPT_MICRO_DATUM = {
+  moduleId: 'MOD-L3-HPT-CORE',
+  name: 'L3 高压涡轮盘、枞树形气冷单晶叶片与环形燃烧室喷嘴微观总成 (HPT & Combustor Micro-System)',
+  referenceManual: 'Rolls-Royce The Jet Engine (Ch. 5 Combustion / Ch. 6 Turbines) & CFM56 CTC-044',
+  parentPortId: 'PORT-HPT-ROTOR-SPLINE',
+  components: [
+    {
+      id: 'L3-HPT-DISK',
+      name: '粉末冶金镍基超合金高压涡轮轮盘 (Rene 88DT Powder-Metallurgy HPT Rotor Disk)',
+      datumStation: 'Ax.Sta +1820mm | Bore R=145mm → Rim R=365mm',
+      material: 'Rene 88DT Nickel-Base Superalloy Forging',
+      explodeVec: { x: 0, y: 0, z: 0 },
+      description: '轮盘中心孔采用厚轮毂抗周向应力设计，外缘精密拉削 72 道轴向枞树形榫槽（3-Tang Fir-Tree Broached Slots），盘腔内部引入高压压气机第 9 级冷气直通叶片根部进气孔。'
+    },
+    {
+      id: 'L3-FIR-TREE-BLADES',
+      name: '单晶定向凝固气膜冷却涡轮工作叶片 ×72 (Single-Crystal Rene N5 Film-Cooled Blades)',
+      datumStation: 'Ax.Sta +1820mm | Pitch Circle R=415mm | 5.0° Angular Pitch',
+      material: 'Rene N5 Single-Crystal Superalloy + EB-PVD YSZ Thermal Barrier Coating (TBC)',
+      explodeVec: { x: 0.45, y: 0.85, z: 0 },
+      description: '叶根采用三齿枞树形榫头（Fir-Tree Root）与锁片定位，允许热态微动膨胀而消除应力集中；叶身内部铸造多回程蛇形冷却通道（Serpentine Passages + Pin-Fins），前缘开设淋浴头气膜孔（Showerhead Film Cooling Holes）。'
+    },
+    {
+      id: 'L3-STAGE1-NGV',
+      name: '第一级高压涡轮导向器静叶环 (Stage-1 High-Pressure Nozzle Guide Vane Ring)',
+      datumStation: 'Ax.Sta +1745mm | Pitch Circle R=410mm | 42 Cooled Vanes',
+      material: 'Cobalt/Nickel Superalloy X-40 / Mar-M-509 with Internal Impingement Tube',
+      explodeVec: { x: -0.95, y: 0, z: 0 },
+      description: '位于燃烧室出口喉部（Sta. 4），将轴向高温燃气加速至接近音速并偏转约 65° 冲击高压涡轮工作叶片，静叶内嵌冲击冷却套管。'
+    },
+    {
+      id: 'L3-ACC-SHROUD',
+      name: '高压涡轮主动叶尖间隙控制外环与蜂窝封严块 (HPT Active Clearance Control Case & Abradable Shroud)',
+      datumStation: 'Ax.Sta +1820mm | Shroud ID R=468mm | Case OD R=515mm',
+      material: 'Inconel 718 Case + Sintered NiCrAlY Honeycomb Abradable Seal Segments',
+      explodeVec: { x: 0.65, y: 1.15, z: 0 },
+      description: '巡航状态下由 FADEC 控制引射外涵冷气吹拂涡轮机匣外环使其均匀收缩，将叶尖径向间隙精准控制在 0.4mm 以内，降低燃油消耗率（SFC）1.5% 以上。'
+    },
+    {
+      id: 'L3-COMBUSTOR-NOZZLES',
+      name: '环形燃烧室内外火焰筒与 20 支双锥旋流喷嘴环 (Annular Liner & 20 Duplex Fuel Swirlers)',
+      datumStation: 'Ax.Sta +1475mm → +1720mm | Swirler Pitch Circle R=355mm',
+      material: 'Hastelloy X / Haynes 188 Multi-Louvre Liner + Cobalt-Alloy Fuel Nozzles',
+      explodeVec: { x: -1.85, y: 0, z: 0 },
+      description: '20 支燃油喷嘴按 18° 分度角均布于环形火焰筒头部，初级旋流器形成中心回流区稳定火焰，次级掺混孔注入稀释空气将出口燃气温度廓线调整至涡轮导向器承受范围内。'
+    }
+  ]
+};
+
+/**
+ * Second Root Twin System: Suspension Bridge Engineering Datum (Wai-Fah Chen Bridge Engineering Handbook Ch. 18)
+ * Demonstrates that the Digital Twin Workbench & MountingPort architecture supports cross-domain civil/bridge engineering.
+ */
+const BRIDGE_CH18_DATUM = {
+  bridgeName: '现代大跨径钢箱梁悬索大桥 (1,385m Main Span Orthotropic Box-Girder Suspension Bridge)',
+  referenceManual: 'Wai-Fah Chen & Lian Duan — Bridge Engineering Handbook, Chapter 18: Suspension Bridges',
+  datumSystem: 'Chainage Station (K+m) | Elevation (EL m) | Transverse Offset (CL m)',
+  spans: {
+    westAnchorageChainage: 165.0,  // K0+165
+    westPylonChainage: 500.0,      // K0+500
+    midspanChainage: 1000.0,       // K1+000 (Main Span = 1000m scaled datum, 500m to 1500m)
+    eastPylonChainage: 1500.0,     // K1+500
+    eastAnchorageChainage: 1835.0, // K1+835
+    deckElevationM: 65.0,          // EL +65.0m navigation clearance
+    pylonTopElevationM: 195.0,     // EL +195.0m tower top saddle
+    mainCableSagM: 105.0,          // Sag-to-span ratio f/L = 1 : 9.52 (Wai-Fah Chen Ch.18 optimal range 1/9 to 1/11)
+    cableCenterOffsetClM: 16.5     // CL ±16.5m main cable transverse spacing (33.0m deck width)
+  },
+  mountingPorts: [
+    {
+      id: 'PORT-BRG-SADDLE-NW',
+      name: '西索塔北肢塔顶主鞍座挂载槽 (West Pylon North Tower-Top Main Cable Saddle Port)',
+      interfaceStandard: 'Bridge Eng. Handbook Ch.18.4 Cast-Steel Groove Saddle & PTFE Sliding Plate',
+      parentLevel: 'L0',
+      childLevel: 'L1',
+      compatibleModuleId: 'MOD-BRG-L1-PYLON-SADDLE',
+      datumCoord: 'K0+500 | EL +195.0m | CL -16.5m',
+      boltCircleMm: 1800,
+      loadTransferAxes: ['Fz (Vertical Cable Compression 340 MN)', 'Fx (Unbalanced Horizontal Force)'],
+      worldPos: bridgeDatumToWorld(500.0, 195.0, -16.5),
+      description: '位于西主塔 K0+500 塔顶高程 EL +195.0m 处，将主缆（PPWS 平行钢丝索股）的巨大竖向压力传递至门式钢筋混凝土索塔柱。'
+    },
+    {
+      id: 'PORT-BRG-ANCHOR-W',
+      name: '西岸重力式锚碇散索鞍与拉杆锚室接口 (West Gravity Anchorage Splay Saddle & Strand Shoe Chamber)',
+      interfaceStandard: 'Bridge Eng. Handbook Ch.18.6 Gravity Block Splay Saddle & Prestressed Anchor Rods',
+      parentLevel: 'L0',
+      childLevel: 'L1',
+      compatibleModuleId: 'MOD-BRG-L1-ANCHORAGE',
+      datumCoord: 'K0+165 | EL +28.0m | CL ±16.5m',
+      boltCircleMm: 3200,
+      loadTransferAxes: ['Fx (Main Cable Tension 260 MN)', 'Fz (Uplift Resistance via Gravity Deadweight)'],
+      worldPos: bridgeDatumToWorld(165.0, 28.0, -16.5),
+      description: '位于西岸 K0+165 处，主缆经散索鞍（Splay Saddle）发散为 127 股平行钢丝束股，锚固于混凝土重力锚体后锚室预应力拉杆上。'
+    },
+    {
+      id: 'PORT-BRG-DECK-MID',
+      name: '跨中主缆索夹、吊索与正交异性钢箱梁耳板接口 (Midspan Cable Clamp, Hanger & Orthotropic Box Girder Port)',
+      interfaceStandard: 'Bridge Eng. Handbook Ch.18.3 Aerodynamic Streamlined Box Girder & Pin-Ended Hanger',
+      parentLevel: 'L1',
+      childLevel: 'L2',
+      compatibleModuleId: 'MOD-BRG-L2-BOX-GIRDER',
+      datumCoord: 'K1+000 | EL +65.0m | CL ±16.5m',
+      boltCircleMm: 650,
+      loadTransferAxes: ['Fz (Deck Dead + Live Traffic Load)', 'Fy (Wind Drag)', 'Mx (Torsional Flutter Stiffness)'],
+      worldPos: bridgeDatumToWorld(1000.0, 65.0, 0.0),
+      description: '位于主跨中心 K1+000 处，展示流线型扁平闭口钢箱梁（梁高 3.5m，宽 33.0m）内部 U 形加劲肋、横隔板、风嘴与吊索销接耳板结构。'
+    }
+  ]
+};
+
+
+// ============================================================================
+// MODULE: modules/l0-aircraft-airframe.js
+// ============================================================================
+/**
+ * L0 Module: Boeing 737-800 Complete Airframe Structural Skeleton, Peelable Skin & MountingPort Bays
+ * All coordinates strictly computed via `fsBlWlToWorld(staIn, blIn, wlIn)` from official Boeing station diagrams.
+ */
+
+
+
+/**
+ * Computes the fuselage half-width & vertical radius taper factor at any Fuselage Station (STA 130..1217)
+ */
+function getFuselageSectionProfile(staIn) {
+  if (staIn <= 130) return { scaleY: 0.04, scaleZ: 0.04, centerWl: 196.0 };
+  if (staIn < 340) {
+    const t = (staIn - 130) / (340 - 130);
+    const ease = Math.sin(t * Math.PI * 0.5);
+    return {
+      scaleY: 0.12 + 0.88 * Math.pow(ease, 0.82),
+      scaleZ: 0.12 + 0.88 * Math.pow(ease, 0.78),
+      centerWl: 196.0 + (227.5 - 196.0) * ease
+    };
+  }
+  if (staIn <= 887) {
+    return { scaleY: 1.0, scaleZ: 1.0, centerWl: 227.5 };
+  }
+  const t = Math.min(1, (staIn - 887) / (1217 - 887));
+  const taper = 1 - Math.pow(t, 1.35) * 0.88;
+  return {
+    scaleY: taper,
+    scaleZ: taper * 0.92,
+    centerWl: 227.5 + t * 26.0 // Tailcone sweeps upward toward WL 253.5 (APU exhaust centerline)
+  };
+}
+function buildL0AircraftAirframe(materials) {
+  const root = new THREE.Group();
+  root.name = 'L0_BOEING_737_800_AIRFRAME';
+  const explodableParts = [];
+  const interactiveTargets = [];
+  const portMarkers = [];
+
+  const rBaseWorld = 74.0 * INCH_TO_METER * SCALE_3D; // 74.0 in lobe radius
+  const hHalfWorld = 79.0 * INCH_TO_METER * SCALE_3D; // Half of 158.0 in height (WL 148.5..306.5)
+
+  // 1. Fuselage Ring Frames (STA 130 to STA 1217 at ~20-inch industrial frame pitch + key splice bulkheads)
+  const frameGroup = new THREE.Group();
+  frameGroup.name = 'FUSELAGE_FS_RING_FRAMES';
+  const allStations = [];
+  for (let sta = 140; sta <= 1200; sta += 24) {
+    allStations.push(sta);
+  }
+  // Ensure exact key splice stations from Boeing Figure 2 are present
+  const spliceStations = [130, 178, 224.8, 259.5, 291.5, 360, 540, 578, 601.8, 635, 663.75, 706.26, 727, 887, 947.5, 1016, 1068, 1126, 1156, 1217];
+  spliceStations.forEach((s) => {
+    if (!allStations.some((x) => Math.abs(x - s) < 6)) allStations.push(s);
+  });
+  allStations.sort((a, b) => a - b);
+
+  allStations.forEach((sta) => {
+    const prof = getFuselageSectionProfile(sta);
+    const pos = fsBlWlToWorld(sta, 0, prof.centerWl);
+    const isMajorSplice = spliceStations.some((s) => Math.abs(s - sta) < 1.5);
+    const tubeRadius = isMajorSplice ? 0.014 : 0.0065;
+    const torusGeo = new THREE.TorusGeometry(rBaseWorld, tubeRadius, 8, 40);
+    const mat = isMajorSplice ? materials.titaniumGold : materials.structuralFrame;
+    const ring = new THREE.Mesh(torusGeo, mat);
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(pos.x, pos.y, pos.z);
+    ring.scale.set(prof.scaleZ, prof.scaleY * (79 / 74), 1);
+    frameGroup.add(ring);
+
+    // Cabin Floor Beam at WL 208.1 (between STA 178 and STA 1016)
+    if (sta >= 178 && sta <= 1016) {
+      const floorWl = 208.1;
+      const floorPos = fsBlWlToWorld(sta, 0, floorWl);
+      const beamSpan = rBaseWorld * prof.scaleZ * 1.82;
+      const floorBeam = new THREE.Mesh(
+        new THREE.BoxGeometry(isMajorSplice ? 0.018 : 0.009, 0.014, beamSpan),
+        isMajorSplice ? materials.titaniumGold : materials.structuralFrame
+      );
+      floorBeam.position.set(floorPos.x, floorPos.y, 0);
+      frameGroup.add(floorBeam);
+    }
+  });
+
+  frameGroup.userData = {
+    partId: 'L0-FUSELAGE-FRAMES',
+    title: 'B737-800 机身纵向隔框与客舱地板梁骨架 (FS Ring Frames STA 130–1217 & WL 208.1 Floor Beams)',
+    datum: 'STA 130.0 → STA 1217.0 | BL ±74.0 in | WL 148.5 → WL 306.5',
+    material: 'Al 2024-T3 / Al 7075-T6 Forged Splice Frames (Sections 41, 43, 44, 46, 47, 48)',
+    description: '严格按照波音 737-800 结构站位图（Figure 2）生成的双圆弧机身环框、前后增压隔框（STA 178 / STA 1016）与 WL 208.1 客舱横梁。'
+  };
+  interactiveTargets.push(frameGroup);
+  root.add(frameGroup);
+
+  // 2. Longitudinal Stringers & Lower Keel Beam (WL 148.5)
+  const stringerGroup = new THREE.Group();
+  const numStringers = 18;
+  for (let i = 0; i < numStringers; i++) {
+    const angle = (i / numStringers) * Math.PI * 2;
+    const pts = [];
+    for (let sta = 135; sta <= 1210; sta += 32) {
+      const prof = getFuselageSectionProfile(sta);
+      const blIn = Math.sin(angle) * 74.0 * prof.scaleZ;
+      const wlIn = prof.centerWl + Math.cos(angle) * 79.0 * prof.scaleY;
+      const p = fsBlWlToWorld(sta, blIn, wlIn);
+      pts.push(new THREE.Vector3(p.x, p.y, p.z));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const strGeo = new THREE.TubeGeometry(curve, 48, 0.0038, 5, false);
+    const strMesh = new THREE.Mesh(strGeo, materials.stringerCyan);
+    stringerGroup.add(strMesh);
+  }
+  // Heavy Bottom Keel Beam (STA 500 to STA 740 along WL 152.0, BL 0.0)
+  const keelStart = fsBlWlToWorld(500, 0, 154.0);
+  const keelEnd = fsBlWlToWorld(740, 0, 154.0);
+  const keelLen = keelEnd.x - keelStart.x;
+  const keelBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(keelLen, 0.045, 0.055),
+    materials.titaniumGold
+  );
+  keelBeam.position.set((keelStart.x + keelEnd.x) * 0.5, keelStart.y, 0);
+  stringerGroup.add(keelBeam);
+  root.add(stringerGroup);
+
+  // 3. Center Wing Box (STA 540.0 to STA 663.75) + Swept Wing Front/Rear Spars & 22 Wing Station Ribs (WS 156.25..691.50)
+  const wingStructureGroup = new THREE.Group();
+  wingStructureGroup.name = 'WING_BOX_AND_WS_RIBS';
+
+  const cwbFwd = fsBlWlToWorld(540.0, 0, 182.0);
+  const cwbAft = fsBlWlToWorld(663.75, 0, 182.0);
+  const cwbWidth = 71.24 * 2 * INCH_TO_METER * SCALE_3D;
+  const centerWingBox = new THREE.Mesh(
+    new THREE.BoxGeometry(cwbAft.x - cwbFwd.x, 0.14, cwbWidth),
+    materials.titaniumGold
+  );
+  centerWingBox.position.set((cwbFwd.x + cwbAft.x) * 0.5, cwbFwd.y, 0);
+  wingStructureGroup.add(centerWingBox);
+
+  // Build both Left (-Z) and Right (+Z) Wing Spars & WS Ribs from official Figure 3 data
+  [-1, 1].forEach((side) => {
+    const sparFrontPts = [];
+    const sparRearPts = [];
+
+    B737_800_DATUM.wingRibStations.forEach((rib) => {
+      const spanRatio = (rib.wbl - 71.24) / (680.40 - 71.24);
+      // 25.02 deg quarter-chord sweep + 6 deg dihedral
+      const fwdSta = 540.0 + spanRatio * 232.0;
+      const chordIn = 178.0 * (1 - spanRatio * 0.72); // Root chord 178 in -> Tip chord 49.8 in
+      const aftSta = fwdSta + chordIn * 0.72;
+      const wlRib = 182.0 + spanRatio * 64.0;
+      const blIn = side * rib.wbl;
+
+      const pFwd = fsBlWlToWorld(fwdSta, blIn, wlRib);
+      const pAft = fsBlWlToWorld(aftSta, blIn, wlRib - 4.0);
+      sparFrontPts.push(new THREE.Vector3(pFwd.x, pFwd.y, pFwd.z));
+      sparRearPts.push(new THREE.Vector3(pAft.x, pAft.y, pAft.z));
+
+      // Wing Rib Web between Front and Rear Spar
+      const ribLen = Math.hypot(pAft.x - pFwd.x, pAft.z - pFwd.z);
+      const ribHeight = 0.11 * (1 - spanRatio * 0.62);
+      const isPylonRib = Math.abs(rib.wbl - 190.97) < 2;
+      const ribMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(ribLen, ribHeight, isPylonRib ? 0.018 : 0.008),
+        isPylonRib ? materials.portHighlight : materials.structuralFrame
+      );
+      ribMesh.position.set((pFwd.x + pAft.x) * 0.5, (pFwd.y + pAft.y) * 0.5, pFwd.z);
+      wingStructureGroup.add(ribMesh);
+    });
+
+    const frontSparCurve = new THREE.CatmullRomCurve3(sparFrontPts);
+    const rearSparCurve = new THREE.CatmullRomCurve3(sparRearPts);
+    wingStructureGroup.add(new THREE.Mesh(new THREE.TubeGeometry(frontSparCurve, 32, 0.016, 8, false), materials.titaniumGold));
+    wingStructureGroup.add(new THREE.Mesh(new THREE.TubeGeometry(rearSparCurve, 32, 0.013, 8, false), materials.structuralFrame));
+
+    // Blended Winglet at WBL ±680.40 (WS 691.50)
+    const tipPt = sparFrontPts[sparFrontPts.length - 1];
+    const wingletPts = [
+      tipPt.clone(),
+      tipPt.clone().add(new THREE.Vector3(0.08, 0.18, side * 0.08)),
+      tipPt.clone().add(new THREE.Vector3(0.24, 0.58, side * 0.12))
+    ];
+    const wingletCurve = new THREE.CatmullRomCurve3(wingletPts);
+    wingStructureGroup.add(new THREE.Mesh(new THREE.TubeGeometry(wingletCurve, 16, 0.012, 6, false), materials.stringerCyan));
+  });
+
+  wingStructureGroup.userData = {
+    partId: 'L0-WING-SPAR-RIBS',
+    title: '中央翼盒（STA 540–663.75）与机翼前后梁/翼肋体系（WS 156.25–691.50）',
+    datum: 'STA 540.0–663.75 | WBL ±71.24 → ±680.40 | WS 156.25 → 691.50',
+    material: 'Al 7055-T77511 Upper Skin/Spar Chords + Al 2024-T3 Lower Panels',
+    description: '基于 NTSB 波音 737-800 机翼站位图（Figure 3）构建：在 WBL ±190.97 / WS 204.25 处设加厚发动机吊架主承力翼肋（高亮金橙色）。'
+  };
+  interactiveTargets.push(wingStructureGroup);
+  root.add(wingStructureGroup);
+
+  // 4. Vertical Fin (STA 960..1180, WL 306.5..642.0) & Horizontal Stabilizer (STA 1068..1195, BL ±282.5)
+  const empennageGroup = new THREE.Group();
+  for (let i = 0; i <= 6; i++) {
+    const t = i / 6;
+    const wl = 295.0 + t * (642.0 - 295.0);
+    const fwdSta = 955.0 + t * 145.0;
+    const aftSta = 1145.0 + t * 52.0;
+    const p1 = fsBlWlToWorld(fwdSta, 0, wl);
+    const p2 = fsBlWlToWorld(aftSta, 0, wl);
+    const finRib = new THREE.Mesh(new THREE.BoxGeometry(p2.x - p1.x, 0.008, 0.025 * (1 - t * 0.5)), materials.structuralFrame);
+    finRib.position.set((p1.x + p2.x) * 0.5, p1.y, 0);
+    empennageGroup.add(finRib);
+  }
+  const finFrontBot = fsBlWlToWorld(955, 0, 295);
+  const finFrontTop = fsBlWlToWorld(1100, 0, 642);
+  const finRearBot = fsBlWlToWorld(1145, 0, 295);
+  const finRearTop = fsBlWlToWorld(1197, 0, 642);
+  empennageGroup.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(finFrontBot.x, finFrontBot.y, 0), new THREE.Vector3(finFrontTop.x, finFrontTop.y, 0)), 8, 0.014, 6, false), materials.titaniumGold));
+  empennageGroup.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(finRearBot.x, finRearBot.y, 0), new THREE.Vector3(finRearTop.x, finRearTop.y, 0)), 8, 0.012, 6, false), materials.structuralFrame));
+  root.add(empennageGroup);
+
+  // 5. Peelable Aerodynamic Fuselage Skin Halves (Upper Crown Skin + Left/Right Belly Fairings)
+  // Explodes outward when user drags the Explode Slider or toggles Skin Peel
+  const buildPeelableSkinHalf = (sideSign, label, explodeVec) => {
+    const skinGroup = new THREE.Group();
+    const lathePts = [];
+    for (let sta = 130; sta <= 1217; sta += 22) {
+      const prof = getFuselageSectionProfile(sta);
+      const pos = fsBlWlToWorld(sta, 0, prof.centerWl);
+      lathePts.push(new THREE.Vector2(rBaseWorld * prof.scaleZ * 1.015, pos.x));
+    }
+    const phiStart = sideSign < 0 ? Math.PI * 0.06 : Math.PI * 1.06;
+    const latheGeo = new THREE.LatheGeometry(lathePts, 28, phiStart, Math.PI * 0.88);
+    latheGeo.rotateZ(-Math.PI / 2);
+    const skinMesh = new THREE.Mesh(latheGeo, materials.aeroSkin);
+    const centerRef = fsBlWlToWorld(601.875, 0, 227.5);
+    skinMesh.position.y = centerRef.y;
+    skinGroup.add(skinMesh);
+
+    const basePos = new THREE.Vector3(0, 0, 0);
+    skinGroup.userData = {
+      partId: sideSign < 0 ? 'L0-SKIN-PORT' : 'L0-SKIN-STBD',
+      title: label,
+      datum: `STA 130.0–1217.0 | BL ${sideSign < 0 ? '-74.0' : '+74.0'} in | Alclad 2024-T3 Skin Panels`,
+      material: 'Alclad 2024-T3 Chem-Milled Skin (0.036–0.090 in Gauge)',
+      description: '可剥离气动蒙皮壁板：拖动爆炸拆解滑块时沿 BL/WL 正交方向平滑分离，完整显露内部 FS 站位环框、龙骨梁与中央翼盒。',
+      basePos,
+      explodeVec
+    };
+    explodableParts.push(skinGroup);
+    interactiveTargets.push(skinGroup);
+    root.add(skinGroup);
+  };
+
+  buildPeelableSkinHalf(-1, '左侧机身气动蒙皮壁板总成 (Port Fuselage Alclad 2024 Skin Shell)', new THREE.Vector3(0, 0.35, -1.25));
+  buildPeelableSkinHalf(1, '右侧机身气动蒙皮壁板总成 (Starboard Fuselage Alclad 2024 Skin Shell)', new THREE.Vector3(0, 0.35, 1.25));
+
+  // 6. Standard MountingPort Interface Markers + L1 Preview Pods at WBL ±190.97
+  B737_800_DATUM.mountingPorts.forEach((port) => {
+    const portGroup = new THREE.Group();
+    portGroup.position.set(port.worldPos.x, port.worldPos.y, port.worldPos.z);
+
+    // Glowing CAD Flange Ring + Orthogonal Axis Crosshair
+    const ringRadius = (port.boltCircleMm / 1000) * SCALE_3D * 0.65;
+    const flangeRing = new THREE.Mesh(
+      new THREE.TorusGeometry(Math.max(0.08, ringRadius), 0.012, 12, 32),
+      port.id === 'PORT-PYLON-LH' ? materials.portActiveGlow : materials.portHighlight
+    );
+    flangeRing.rotation.x = Math.PI / 2;
+    portGroup.add(flangeRing);
+
+    const coreBeacon = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.055, 1),
+      port.id === 'PORT-PYLON-LH' ? materials.portActiveGlow : materials.portHighlight
+    );
+    portGroup.add(coreBeacon);
+
+    // If this is the LH or RH Wing Pylon Port, also render the mounted L1 Nacelle/Pylon Silhouette Preview
+    if (port.id === 'PORT-PYLON-LH' || port.id === 'PORT-PYLON-RH') {
+      const nacellePod = new THREE.Group();
+      const fanRadius = (1.549 * 0.5) * SCALE_3D;
+      const nacLen = 2.508 * SCALE_3D;
+      // Pylon Strut connecting Wing Front Spar (WL 192) down to Engine Centerline (WL 162)
+      const strutMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(nacLen * 0.62, 0.19, 0.045),
+        port.id === 'PORT-PYLON-LH' ? materials.portActiveGlow : materials.titaniumGold
+      );
+      strutMesh.position.set(-0.08, -0.09, 0);
+      nacellePod.add(strutMesh);
+
+      // Nacelle Cowl Barrel
+      const cowlGeo = new THREE.CylinderGeometry(fanRadius * 1.12, fanRadius * 0.96, nacLen, 28, 1, true);
+      cowlGeo.rotateZ(Math.PI / 2);
+      const cowlMesh = new THREE.Mesh(cowlGeo, materials.nacellePreview);
+      cowlMesh.position.set(-0.12, -0.22, 0);
+      nacellePod.add(cowlMesh);
+
+      // Spinning Fan Spinner & Blades inside preview pod
+      const fanHub = new THREE.Mesh(
+        new THREE.ConeGeometry(fanRadius * 0.32, 0.14, 16),
+        materials.titaniumGold
+      );
+      fanHub.rotation.z = Math.PI / 2;
+      fanHub.position.set(-0.12 - nacLen * 0.42, -0.22, 0);
+      nacellePod.add(fanHub);
+
+      portGroup.add(nacellePod);
+    }
+
+    const basePos = portGroup.position.clone();
+    const explodeVec = new THREE.Vector3(
+      port.id.includes('PYLON') ? -0.35 : 0,
+      port.id.includes('PYLON') ? -0.45 : -0.3,
+      port.blIn < 0 ? -0.35 : port.blIn > 0 ? 0.35 : 0
+    );
+
+    portGroup.userData = {
+      isMountingPort: true,
+      portData: port,
+      partId: port.id,
+      title: `【标准挂载接口】${port.name}`,
+      datum: `STA ${port.staIn.toFixed(1)} | BL ${port.blIn.toFixed(2)} | WL ${port.wlIn.toFixed(1)}${port.wsIn ? ` | WS ${port.wsIn}` : ''}`,
+      material: `${port.interfaceStandard} (Bolt Circle Ø${port.boltCircleMm}mm)`,
+      description: `${port.description} 点击此接口可下钻进入子系统级拆解。`,
+      drillDownLevel: port.id === 'PORT-PYLON-LH' || port.id === 'PORT-PYLON-RH' ? 1 : null,
+      basePos,
+      explodeVec
+    };
+
+    explodableParts.push(portGroup);
+    interactiveTargets.push(portGroup);
+    portMarkers.push(portGroup);
+    root.add(portGroup);
+  });
+
+  return {
+    root,
+    explodableParts,
+    interactiveTargets,
+    portMarkers
+  };
+}
+
+
+// ============================================================================
+// MODULE: modules/l1-pylon-nacelle.js
+// ============================================================================
+/**
+ * L1 Module: Boeing 737-800 Left Wing Pylon Torque Box, Thrust Struts & Nacelle Cowl System (ATA 54 / ATA 71 / ATA 78)
+ * Mated directly to Parent Port `PORT-PYLON-LH` at WBL -190.97 / WS 204.25 / STA 518.0
+ * Exposes Child MountingPorts `PORT-ENG-FWD-STA12` (Fan Frame Cone Bolts) and `PORT-ENG-AFT-STA5` (TRF Tangential Links)
+ */
+function buildL1PylonNacelle(materials) {
+  const root = new THREE.Group();
+  root.name = 'L1_PYLON_NACELLE_ASSEMBLY';
+  const explodableParts = [];
+  const interactiveTargets = [];
+  const portMarkers = [];
+  const coaxialGuides = [];
+
+  // Reference: Local L1 scene centered on Engine Centerline (WBL -190.97, WL 162.0, STA 500.0)
+  // Scale: 1 meter = 1.45 scene units in L1/L2 focus mode for crisp mechanical detail
+  const M_SCALE = 1.45;
+  const fanRadius = 0.7745 * M_SCALE;
+
+  // 0. Ghost Context Reference of Parent Wing Front/Rear Spar Segment (WS 180.00 to WS 253.00)
+  const wingRefGroup = new THREE.Group();
+  const frontSparBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.34, 3.6),
+    materials.ghostWireframe
+  );
+  frontSparBeam.position.set(0.65, 1.18, 0);
+  wingRefGroup.add(frontSparBeam);
+
+  // Rib #3 at WBL -190.97 / WS 204.25 (Parent Mounting Rib)
+  const rib3Web = new THREE.Mesh(
+    new THREE.BoxGeometry(1.95, 0.32, 0.06),
+    materials.ghostWireframe
+  );
+  rib3Web.position.set(1.45, 1.18, 0);
+  wingRefGroup.add(rib3Web);
+
+  // Parent Port Flange Indicator (`PORT-PYLON-LH` 4 Fuse-Pin Clevis Lugs)
+  [-0.22, 0.22].forEach((zOff) => {
+    const clevisLug = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.065, 0.065, 0.16, 16),
+      materials.portHighlight
+    );
+    clevisLug.position.set(0.55, 1.02, zOff);
+    wingRefGroup.add(clevisLug);
+  });
+  root.add(wingRefGroup);
+
+  // 1. Titanium Pylon Primary Torque Box (ATA 54-11)
+  const torqueBoxGroup = new THREE.Group();
+  const pylonShape = new THREE.Shape();
+  pylonShape.moveTo(-0.95, 0.82);
+  pylonShape.lineTo(1.55, 1.12);
+  pylonShape.lineTo(1.85, 0.58);
+  pylonShape.lineTo(1.15, 0.42);
+  pylonShape.lineTo(-0.75, 0.56);
+  pylonShape.closePath();
+
+  const extrudeSettings = { depth: 0.34, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 };
+  const boxGeo = new THREE.ExtrudeGeometry(pylonShape, extrudeSettings);
+  boxGeo.translate(0, 0, -0.17);
+  const boxMesh = new THREE.Mesh(boxGeo, materials.titaniumGold);
+  torqueBoxGroup.add(boxMesh);
+
+  // Internal Forged Bulkheads inside Pylon Torque Box
+  [-0.55, -0.1, 0.35, 0.85, 1.35].forEach((xPos) => {
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.44, 0.38), materials.structuralFrame);
+    rib.position.set(xPos, 0.76, 0);
+    torqueBoxGroup.add(rib);
+  });
+
+  const tbSpec = L1_PYLON_NACELLE_DATUM.subcomponents[0];
+  torqueBoxGroup.userData = {
+    partId: tbSpec.id,
+    title: `${tbSpec.code} — ${tbSpec.name}`,
+    datum: 'WBL -190.97 | WS 204.25 | STA 475.0 → STA 578.0 | WL 192.0',
+    material: tbSpec.material,
+    description: tbSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(tbSpec.explodeVec.x, tbSpec.explodeVec.y, tbSpec.explodeVec.z)
+  };
+  explodableParts.push(torqueBoxGroup);
+  interactiveTargets.push(torqueBoxGroup);
+  root.add(torqueBoxGroup);
+
+  // 2. Dual Diagonal Thrust Struts & Whiffletree Balance Beam (ATA 71-22)
+  const thrustStrutGroup = new THREE.Group();
+  [-0.16, 0.16].forEach((zOff) => {
+    const pStart = new THREE.Vector3(-0.55, 0.62, zOff);
+    const pEnd = new THREE.Vector3(0.48, 0.88, zOff * 0.5);
+    const strutGeo = new THREE.TubeGeometry(new THREE.LineCurve3(pStart, pEnd), 8, 0.028, 12, false);
+    thrustStrutGroup.add(new THREE.Mesh(strutGeo, materials.highTempAlloy));
+  });
+  const whiffletree = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.42), materials.portHighlight);
+  whiffletree.position.set(-0.55, 0.62, 0);
+  thrustStrutGroup.add(whiffletree);
+
+  const tsSpec = L1_PYLON_NACELLE_DATUM.subcomponents[1];
+  thrustStrutGroup.userData = {
+    partId: tsSpec.id,
+    title: `${tsSpec.code} — ${tsSpec.name}`,
+    datum: 'Ax.Sta +780mm → +1420mm | 12:00 Centerline | Fx = 121.4 kN',
+    material: tsSpec.material,
+    description: tsSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(tsSpec.explodeVec.x, tsSpec.explodeVec.y, tsSpec.explodeVec.z)
+  };
+  explodableParts.push(thrustStrutGroup);
+  interactiveTargets.push(thrustStrutGroup);
+  root.add(thrustStrutGroup);
+
+  // 3. Acoustic Inlet Cowl & Thermal Anti-Ice Lip (ATA 71-11)
+  const inletGroup = new THREE.Group();
+  const lipRadius = fanRadius * 1.04;
+  const lipTorus = new THREE.Mesh(
+    new THREE.TorusGeometry(lipRadius, 0.11, 20, 48),
+    materials.chromeAlloy
+  );
+  lipTorus.rotation.y = Math.PI / 2;
+  lipTorus.position.x = -1.62;
+  inletGroup.add(lipTorus);
+
+  const barrelGeo = new THREE.CylinderGeometry(lipRadius * 1.05, fanRadius * 1.08, 0.72, 48, 1, true);
+  barrelGeo.rotateZ(Math.PI / 2);
+  const barrelMesh = new THREE.Mesh(barrelGeo, materials.aeroSkin);
+  barrelMesh.position.x = -1.25;
+  inletGroup.add(barrelMesh);
+
+  // Internal Piccolo Anti-Ice Ring inside Lip
+  const piccoloRing = new THREE.Mesh(
+    new THREE.TorusGeometry(lipRadius * 0.98, 0.018, 10, 36),
+    materials.portHighlight
+  );
+  piccoloRing.rotation.y = Math.PI / 2;
+  piccoloRing.position.x = -1.56;
+  inletGroup.add(piccoloRing);
+
+  const inSpec = L1_PYLON_NACELLE_DATUM.subcomponents[2];
+  inletGroup.userData = {
+    partId: inSpec.id,
+    title: `${inSpec.code} — ${inSpec.name}`,
+    datum: 'STA 452.0 → STA 488.0 | Engine Sta. 0 Intake Hilite Plane',
+    material: inSpec.material,
+    description: inSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(inSpec.explodeVec.x, inSpec.explodeVec.y, inSpec.explodeVec.z)
+  };
+  explodableParts.push(inletGroup);
+  interactiveTargets.push(inletGroup);
+  root.add(inletGroup);
+
+  // 4. Left & Right Hinged CFRP Fan Cowl Doors (ATA 71-13-L / R)
+  const buildFanCowlDoor = (sideSign, specIndex) => {
+    const cowlGroup = new THREE.Group();
+    const phiStart = sideSign < 0 ? Math.PI * 0.05 : Math.PI * 1.05;
+    const cowlGeo = new THREE.CylinderGeometry(fanRadius * 1.09, fanRadius * 1.07, 1.05, 36, 1, true, phiStart, Math.PI * 0.9);
+    cowlGeo.rotateZ(Math.PI / 2);
+    const cowlMesh = new THREE.Mesh(cowlGeo, materials.aeroSkin);
+    cowlMesh.position.x = -0.35;
+    cowlGroup.add(cowlMesh);
+
+    // Stiffening Circumferential Ribs on inner wall of CFRP door
+    [-0.75, -0.35, 0.05].forEach((xR) => {
+      const ribArc = new THREE.Mesh(
+        new THREE.TorusGeometry(fanRadius * 1.06, 0.016, 8, 28, Math.PI * 0.86),
+        materials.structuralFrame
+      );
+      ribArc.rotation.y = Math.PI / 2;
+      ribArc.rotation.x = sideSign < 0 ? 0.1 : Math.PI + 0.1;
+      ribArc.position.x = xR;
+      cowlGroup.add(ribArc);
+    });
+
+    const spec = L1_PYLON_NACELLE_DATUM.subcomponents[specIndex];
+    cowlGroup.userData = {
+      partId: spec.id,
+      title: `${spec.code} — ${spec.name}`,
+      datum: `STA 488.0 → STA 532.0 | WBL ${sideSign < 0 ? '-222.0' : '-160.0'} | Hinge Line @ 12:00 Pylon`,
+      material: spec.material,
+      description: spec.description,
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(spec.explodeVec.x, spec.explodeVec.y, spec.explodeVec.z)
+    };
+    explodableParts.push(cowlGroup);
+    interactiveTargets.push(cowlGroup);
+    root.add(cowlGroup);
+  };
+  buildFanCowlDoor(-1, 3);
+  buildFanCowlDoor(1, 4);
+
+  // 5. Translating C-Duct Thrust Reverser Halves & Turning Cascades (ATA 78-31)
+  [-1, 1].forEach((sideSign) => {
+    const trGroup = new THREE.Group();
+    const phiStart = sideSign < 0 ? Math.PI * 0.06 : Math.PI * 1.06;
+    const sleeveGeo = new THREE.CylinderGeometry(fanRadius * 1.05, fanRadius * 0.76, 1.15, 36, 1, true, phiStart, Math.PI * 0.88);
+    sleeveGeo.rotateZ(Math.PI / 2);
+    const sleeveMesh = new THREE.Mesh(sleeveGeo, materials.nacellePreview);
+    sleeveMesh.position.x = 0.78;
+    trGroup.add(sleeveMesh);
+
+    // Exposed Turning Vane Cascade Basket when translated
+    const cascadeGeo = new THREE.CylinderGeometry(fanRadius * 0.98, fanRadius * 0.94, 0.42, 24, 4, true, phiStart, Math.PI * 0.85);
+    cascadeGeo.rotateZ(Math.PI / 2);
+    const cascadeMesh = new THREE.Mesh(cascadeGeo, materials.stringerCyan);
+    cascadeMesh.position.x = 0.38;
+    trGroup.add(cascadeMesh);
+
+    const spec = L1_PYLON_NACELLE_DATUM.subcomponents[5];
+    trGroup.userData = {
+      partId: `${spec.id}-${sideSign < 0 ? 'LH' : 'RH'}`,
+      title: `${spec.code} — ${spec.name} (${sideSign < 0 ? '左半环 LH C-Duct' : '右半环 RH C-Duct'})`,
+      datum: 'STA 532.0 → STA 584.0 | Translating Stroke +485mm',
+      material: spec.material,
+      description: spec.description,
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(spec.explodeVec.x, spec.explodeVec.y, sideSign * Math.abs(spec.explodeVec.z))
+    };
+    explodableParts.push(trGroup);
+    interactiveTargets.push(trGroup);
+    root.add(trGroup);
+  });
+
+  // 6. Internal Preview of CFM56 Core Silhouette + Standard Child MountingPorts (`PORT-ENG-FWD-STA12` & `PORT-ENG-AFT-STA5`)
+  const corePreview = new THREE.Group();
+  const fanPreview = new THREE.Mesh(
+    new THREE.CylinderGeometry(fanRadius * 0.96, fanRadius * 0.96, 0.22, 32),
+    materials.ghostWireframe
+  );
+  fanPreview.rotation.z = Math.PI / 2;
+  fanPreview.position.x = -0.82;
+  corePreview.add(fanPreview);
+
+  const coreBarrel = new THREE.Mesh(
+    new THREE.CylinderGeometry(fanRadius * 0.52, fanRadius * 0.46, 2.35, 28, 4, true),
+    materials.ghostWireframe
+  );
+  coreBarrel.rotation.z = Math.PI / 2;
+  coreBarrel.position.x = 0.25;
+  corePreview.add(coreBarrel);
+  root.add(corePreview);
+
+  // Child MountingPorts to L2 CFM56 Engine (`PORT-ENG-FWD-STA12` & `PORT-ENG-AFT-STA5`)
+  L1_PYLON_NACELLE_DATUM.childMountingPorts.forEach((port, idx) => {
+    const portGroup = new THREE.Group();
+    const xPos = idx === 0 ? -0.55 : 1.15;
+    const yPos = idx === 0 ? 0.58 : 0.44;
+    portGroup.position.set(xPos, yPos, 0);
+
+    const flangeRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.18, 0.022, 14, 36),
+      materials.portActiveGlow
+    );
+    flangeRing.rotation.x = Math.PI / 2;
+    portGroup.add(flangeRing);
+
+    const coneBolt = new THREE.Mesh(
+      new THREE.ConeGeometry(0.075, 0.18, 16),
+      materials.portActiveGlow
+    );
+    portGroup.add(coneBolt);
+
+    portGroup.userData = {
+      isMountingPort: true,
+      portData: port,
+      partId: port.id,
+      title: `【L1→L2 标准挂载端口】${port.name}`,
+      datum: `Engine Ax.Sta +${port.engineAxialMm}mm | R=${port.radiusMm}mm @ 12:00 | Ø${port.boltCircleMm}mm`,
+      material: port.interfaceStandard,
+      description: `${port.description} 点击此接口立即下钻进入 L2 CFM56 涡扇发动机六大核心段拆解！`,
+      drillDownLevel: 2,
+      basePos: portGroup.position.clone(),
+      explodeVec: new THREE.Vector3(0, 0.35, 0)
+    };
+    explodableParts.push(portGroup);
+    interactiveTargets.push(portGroup);
+    portMarkers.push(portGroup);
+    root.add(portGroup);
+  });
+
+  // Coaxial Assembly Centerline Guide Line
+  const axisGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-3.2, 0, 0),
+    new THREE.Vector3(3.2, 0, 0)
+  ]);
+  const axisLine = new THREE.Line(axisGeo, materials.datumLineCyan);
+  axisLine.computeLineDistances();
+  coaxialGuides.push(axisLine);
+  root.add(axisLine);
+
+  return {
+    root,
+    explodableParts,
+    interactiveTargets,
+    portMarkers,
+    coaxialGuides
+  };
+}
+
+
+// ============================================================================
+// MODULE: modules/l2-cfm56-turbofan.js
+// ============================================================================
+/**
+ * L2 Module: CFM56-7B27 Turbofan 6 Core Functional Sections + 5 Bearings + 2 Concentric Spools (N1 LP & N2 HP)
+ * Directly modeled from CFMI Training Manual `cfm56_basic_engine_ctc044.pdf` (Pages 24, 30, 32, 34)
+ *
+ * Axial Coordinate Mapping:
+ *   Engine Axial Station [0 .. 2508 mm] maps along X axis from -1.85 to +1.85 scene units (1000mm = 1.48 units)
+ */
+const MM_TO_L2 = 0.00148; // 1 mm = 0.00148 Three.js units in L2 inspection space
+const AXIAL_ORIGIN_MM = 1254; // Midpoint of 2508mm engine length
+function axialMmToX(mm) {
+  return (mm - AXIAL_ORIGIN_MM) * MM_TO_L2;
+}
+function buildL2Cfm56Turbofan(materials) {
+  const root = new THREE.Group();
+  root.name = 'L2_CFM56_7B_TURBOFAN';
+  const explodableParts = [];
+  const interactiveTargets = [];
+  const portMarkers = [];
+  const animatedRotors = { n1Parts: [], n2Parts: [] };
+
+  // 0. Ghost Context Reference of Parent L1 Pylon Torque Box & Forward/Aft Mounts
+  const ghostPylon = new THREE.Group();
+  const pylonGhostBox = new THREE.Mesh(
+    new THREE.BoxGeometry(2.4, 0.36, 0.34),
+    materials.ghostWireframe
+  );
+  pylonGhostBox.position.set(0.15, 1.36, 0);
+  ghostPylon.add(pylonGhostBox);
+
+  // Coaxial Datum Centerline & Bolt-Circle Guide Lines
+  const centerAxisGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-3.6, 0, 0),
+    new THREE.Vector3(3.6, 0, 0)
+  ]);
+  const centerAxisLine = new THREE.Line(centerAxisGeo, materials.datumLineCyan);
+  ghostPylon.add(centerAxisLine);
+  root.add(ghostPylon);
+
+  // 1. Concentric Dual Spools (Inner N1 LP Shaft in Cyan + Outer Hollow N2 HP Drum Shaft in Amber/Crimson)
+  // Plus the 5 Main Bearings (No. 1 Ball, No. 2 Roller, No. 3 Ball+Roller, No. 4 Roller, No. 5 Roller)
+  const spoolBearingGroup = new THREE.Group();
+  const n1ShaftLen = (2320 - 180) * MM_TO_L2;
+  const n1Shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.085, 0.085, n1ShaftLen, 24),
+    materials.n1ShaftCyan
+  );
+  n1Shaft.rotation.z = Math.PI / 2;
+  n1Shaft.position.x = axialMmToX((180 + 2320) * 0.5);
+  spoolBearingGroup.add(n1Shaft);
+  animatedRotors.n1Parts.push(n1Shaft);
+
+  const n2ShaftLen = (1880 - 810) * MM_TO_L2;
+  const n2Shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.155, 0.155, n2ShaftLen, 28, 1, true),
+    materials.n2ShaftGold
+  );
+  n2Shaft.rotation.z = Math.PI / 2;
+  n2Shaft.position.x = axialMmToX((810 + 1880) * 0.5);
+  spoolBearingGroup.add(n2Shaft);
+  animatedRotors.n2Parts.push(n2Shaft);
+
+  // 5 Main Bearings from CTC-044 Page 32
+  L2_CFM56_DATUM.bearingsAndSumps.forEach((brg) => {
+    const brgGroup = new THREE.Group();
+    const xPos = axialMmToX(brg.axialMm);
+    const rOuter = brg.radiusMm * MM_TO_L2;
+    const raceTorus = new THREE.Mesh(
+      new THREE.TorusGeometry(rOuter, 0.024, 12, 32),
+      brg.rotor.includes('N1') ? materials.stringerCyan : materials.portHighlight
+    );
+    raceTorus.rotation.y = Math.PI / 2;
+    brgGroup.position.x = xPos;
+    brgGroup.add(raceTorus);
+
+    // Rolling Elements (Balls or Rollers)
+    for (let k = 0; k < 12; k++) {
+      const ang = (k / 12) * Math.PI * 2;
+      const elem = new THREE.Mesh(
+        brg.type.includes('Ball')
+          ? new THREE.SphereGeometry(0.022, 10, 10)
+          : new THREE.CylinderGeometry(0.018, 0.018, 0.036, 10),
+        materials.chromeAlloy
+      );
+      if (!brg.type.includes('Ball')) elem.rotation.z = Math.PI / 2;
+      elem.position.set(0, Math.cos(ang) * rOuter, Math.sin(ang) * rOuter);
+      brgGroup.add(elem);
+    }
+    spoolBearingGroup.add(brgGroup);
+  });
+
+  spoolBearingGroup.userData = {
+    partId: 'CFM56-SPOOLS-5BEARINGS',
+    title: 'N1/N2 同心双转子轴系与五主轴承支承系统 (2 Concentric Spools + 5 Bearings in Sump A & B)',
+    datum: 'Ax.Sta +180mm → +2320mm | Bearings #1, #2, #3 (Fwd Sump A) & #4, #5 (Rear Sump B)',
+    material: 'Maraging Steel / Inconel 718 Concentric Shafts + M50 Tool Steel Bearing Races',
+    description: '严格还原 CTC-044 第 32 页架构：内层青色 N1 低压轴贯穿整机连接风扇与 4 级低压涡轮（1#、2#、5#轴承支承）；外层金色空心 N2 高压鼓筒轴连接 9 级高压压气机与单级高压涡轮（3#、4#轴承支承）。',
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(0, 0, 0)
+  };
+  interactiveTargets.push(spoolBearingGroup);
+  root.add(spoolBearingGroup);
+
+  // ============================================================================
+  // MODULE M1: Fan Rotor (24 Wide-Chord Ti Blades), 3-Stage LPC Booster & Fan Frame (Sta. 0 -> Sta. 25)
+  // ============================================================================
+  const m1Spec = L2_CFM56_DATUM.coreSections[0];
+  const m1Group = new THREE.Group();
+  const fanCenterX = axialMmToX(260);
+  const fanOuterR = m1Spec.outerRadiusMm * MM_TO_L2;
+  const fanHubR = 235 * MM_TO_L2;
+
+  // Conical Spinner Cone (Sta. 0)
+  const spinner = new THREE.Mesh(
+    new THREE.ConeGeometry(fanHubR, 0.38, 28),
+    materials.chromeAlloy
+  );
+  spinner.rotation.z = Math.PI / 2;
+  spinner.position.x = fanCenterX - 0.24;
+
+  // Fan Rotor Assembly (Spins with N1)
+  const fanRotor = new THREE.Group();
+  fanRotor.add(spinner);
+
+  const fanDisk = new THREE.Mesh(
+    new THREE.CylinderGeometry(fanHubR, fanHubR * 0.88, 0.22, 28),
+    materials.titaniumGold
+  );
+  fanDisk.rotation.z = Math.PI / 2;
+  fanDisk.position.x = fanCenterX;
+  fanRotor.add(fanDisk);
+
+  // 24 Wide-Chord Swept Titanium Fan Blades
+  const bladeLen = fanOuterR - fanHubR * 0.92;
+  const bladeGeo = new THREE.BoxGeometry(0.11, bladeLen, 0.22);
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * Math.PI * 2;
+    const bladeHolder = new THREE.Group();
+    bladeHolder.position.x = fanCenterX;
+    bladeHolder.rotation.x = angle;
+
+    const blade = new THREE.Mesh(bladeGeo, materials.chromeAlloy);
+    blade.position.y = fanHubR * 0.9 + bladeLen * 0.5;
+    blade.rotation.y = 0.48; // Aerodynamic pitch twist
+    bladeHolder.add(blade);
+    fanRotor.add(bladeHolder);
+  }
+
+  // 3-Stage LPC Booster Rotor Drum (aft of fan blade root, Sta. 1.2 -> Sta. 2)
+  for (let stg = 0; stg < 3; stg++) {
+    const stgX = axialMmToX(440 + stg * 95);
+    const stgR = (380 - stg * 14) * MM_TO_L2;
+    const boosterRing = new THREE.Mesh(
+      new THREE.CylinderGeometry(stgR, stgR, 0.055, 28),
+      materials.stringerCyan
+    );
+    boosterRing.rotation.z = Math.PI / 2;
+    boosterRing.position.x = stgX;
+    fanRotor.add(boosterRing);
+  }
+  animatedRotors.n1Parts.push(fanRotor);
+  m1Group.add(fanRotor);
+
+  // Fan Frame (Sta. 12: 12 Radial Structural Struts + Outer Fan Containment Case + Forward Engine Mount @ 12:00)
+  const fanFrameX = axialMmToX(740);
+  const fanCase = new THREE.Mesh(
+    new THREE.CylinderGeometry(fanOuterR * 1.03, fanOuterR * 1.01, 0.88, 40, 1, true, 0, Math.PI * 1.62),
+    materials.cutawayCaseBlue
+  );
+  fanCase.rotation.z = Math.PI / 2;
+  fanCase.rotation.x = -0.35;
+  fanCase.position.x = axialMmToX(490);
+  m1Group.add(fanCase);
+
+  for (let s = 0; s < 12; s++) {
+    const ang = (s / 12) * Math.PI * 2;
+    const strut = new THREE.Mesh(
+      new THREE.BoxGeometry(0.16, fanOuterR - 0.34, 0.028),
+      s === 0 || s === 6 ? materials.titaniumGold : materials.structuralFrame
+    );
+    const holder = new THREE.Group();
+    holder.position.x = fanFrameX;
+    holder.rotation.x = ang;
+    strut.position.y = 0.34 + (fanOuterR - 0.34) * 0.5;
+    holder.add(strut);
+    m1Group.add(holder);
+  }
+
+  // Forward Engine Mount Attachment Pad at 12:00 on Fan Frame (Sta. 12)
+  const fwdMountPad = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.14, 0.28),
+    materials.portHighlight
+  );
+  fwdMountPad.position.set(fanFrameX, fanOuterR * 1.05, 0);
+  m1Group.add(fwdMountPad);
+
+  m1Group.userData = {
+    partId: m1Spec.id,
+    title: m1Spec.name,
+    datum: `${m1Spec.stationCode} | Ax.Sta 0 → +860mm | Ø1549mm Fan | 12 OGV Struts`,
+    material: 'Ti-6Al-4V Wide-Chord Fan Blades + Kevlar Containment Case + 17-4PH Fan Frame',
+    description: m1Spec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(m1Spec.explodeAxialMm * MM_TO_L2, 0, 0)
+  };
+  explodableParts.push(m1Group);
+  interactiveTargets.push(m1Group);
+  root.add(m1Group);
+
+  // ============================================================================
+  // MODULE M2: 9-Stage High-Pressure Compressor (HPC) & VSV Rings (Sta. 25 -> Sta. 3)
+  // ============================================================================
+  const m2Spec = L2_CFM56_DATUM.coreSections[1];
+  const m2Group = new THREE.Group();
+  const hpcRotorGroup = new THREE.Group();
+
+  for (let stg = 0; stg < 9; stg++) {
+    const t = stg / 8;
+    const stgX = axialMmToX(900 + stg * 62);
+    const rTip = (425 - t * 88) * MM_TO_L2;
+    const rHub = (225 + t * 52) * MM_TO_L2;
+
+    const disk = new THREE.Mesh(
+      new THREE.CylinderGeometry(rHub, rHub, 0.042, 24),
+      materials.titaniumGold
+    );
+    disk.rotation.z = Math.PI / 2;
+    disk.position.x = stgX;
+    hpcRotorGroup.add(disk);
+
+    const bladeCount = 24 + stg * 2;
+    const bLen = rTip - rHub;
+    const bGeo = new THREE.BoxGeometry(0.028, bLen, 0.036);
+    for (let b = 0; b < bladeCount; b++) {
+      const ang = (b / bladeCount) * Math.PI * 2;
+      const bHolder = new THREE.Group();
+      bHolder.position.x = stgX;
+      bHolder.rotation.x = ang;
+      const blade = new THREE.Mesh(bGeo, stg < 4 ? materials.chromeAlloy : materials.titaniumGold);
+      blade.position.y = rHub + bLen * 0.5;
+      blade.rotation.y = 0.55;
+      bHolder.add(blade);
+      hpcRotorGroup.add(bHolder);
+    }
+
+    // Variable Stator Vane (VSV) Actuator Ring for IGV + Stages 1..3
+    if (stg < 4) {
+      const vsvRing = new THREE.Mesh(
+        new THREE.TorusGeometry(rTip * 1.08, 0.012, 8, 32),
+        materials.portHighlight
+      );
+      vsvRing.rotation.y = Math.PI / 2;
+      vsvRing.position.x = stgX - 0.035;
+      m2Group.add(vsvRing);
+    }
+  }
+  animatedRotors.n2Parts.push(hpcRotorGroup);
+  m2Group.add(hpcRotorGroup);
+
+  // Split 270-deg Cutaway HPC Casing
+  const hpcCaseLen = (1460 - 860) * MM_TO_L2;
+  const hpcCase = new THREE.Mesh(
+    new THREE.CylinderGeometry(435 * MM_TO_L2, 355 * MM_TO_L2, hpcCaseLen, 32, 1, true, 0, Math.PI * 1.55),
+    materials.structuralFrame
+  );
+  hpcCase.rotation.z = Math.PI / 2;
+  hpcCase.rotation.x = -0.35;
+  hpcCase.position.x = axialMmToX((860 + 1460) * 0.5);
+  m2Group.add(hpcCase);
+
+  m2Group.userData = {
+    partId: m2Spec.id,
+    title: m2Spec.name,
+    datum: `${m2Spec.stationCode} | Ax.Sta +860mm → +1460mm | 9 Rotor Stages + IGV/VSV 1–3`,
+    material: 'Ti-6Al-2Sn-4Zr-2Mo (Stages 1–3) + Inconel 718 Rear Spool (Stages 4–9)',
+    description: m2Spec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(m2Spec.explodeAxialMm * MM_TO_L2, 0, 0)
+  };
+  explodableParts.push(m2Group);
+  interactiveTargets.push(m2Group);
+  root.add(m2Group);
+
+  // ============================================================================
+  // MODULE M3: Short Annular Combustion Chamber & 20 Fuel Nozzles (Sta. 3 -> Sta. 39)
+  // ============================================================================
+  const m3Spec = L2_CFM56_DATUM.coreSections[2];
+  const m3Group = new THREE.Group();
+  const combMidX = axialMmToX((1460 + 1730) * 0.5);
+  const combLen = (1730 - 1460) * MM_TO_L2;
+  const combOuterR = 445 * MM_TO_L2;
+  const combInnerR = 265 * MM_TO_L2;
+
+  // Annular Flame Tube Outer & Inner Liners (Cutaway to expose glowing core flame & 20 swirlers)
+  const outerLiner = new THREE.Mesh(
+    new THREE.CylinderGeometry(combOuterR, combOuterR, combLen, 32, 1, true, 0, Math.PI * 1.58),
+    materials.combustorAmber
+  );
+  outerLiner.rotation.z = Math.PI / 2;
+  outerLiner.rotation.x = -0.35;
+  outerLiner.position.x = combMidX;
+  m3Group.add(outerLiner);
+
+  const innerLiner = new THREE.Mesh(
+    new THREE.CylinderGeometry(combInnerR, combInnerR, combLen, 32, 1, true),
+    materials.combustorAmber
+  );
+  innerLiner.rotation.z = Math.PI / 2;
+  innerLiner.position.x = combMidX;
+  m3Group.add(innerLiner);
+
+  // 20 Duplex Fuel Nozzles & Swirlers around Pitch Circle R = 355mm
+  const nozzlePitchR = 355 * MM_TO_L2;
+  const nozzleX = axialMmToX(1485);
+  for (let n = 0; n < 20; n++) {
+    const ang = (n / 20) * Math.PI * 2;
+    const y = Math.cos(ang) * nozzlePitchR;
+    const z = Math.sin(ang) * nozzlePitchR;
+    const nozzleStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.016, 0.022, 0.14, 10),
+      materials.chromeAlloy
+    );
+    nozzleStem.position.set(nozzleX, y * 1.15, z * 1.15);
+    nozzleStem.rotation.x = ang;
+    m3Group.add(nozzleStem);
+
+    const flameCore = new THREE.Mesh(
+      new THREE.ConeGeometry(0.048, combLen * 0.82, 12),
+      materials.portActiveGlow
+    );
+    flameCore.rotation.z = -Math.PI / 2;
+    flameCore.position.set(combMidX, y, z);
+    m3Group.add(flameCore);
+  }
+
+  m3Group.userData = {
+    partId: m3Spec.id,
+    title: m3Spec.name,
+    datum: `${m3Spec.stationCode} | Ax.Sta +1460mm → +1730mm | 20 Fuel Nozzles @ R=355mm`,
+    material: 'Hastelloy X / Haynes 188 Multi-Louvre Film-Cooled Liner + TBC',
+    description: m3Spec.description,
+    drillDownLevel: 3,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(m3Spec.explodeAxialMm * MM_TO_L2, 0, 0)
+  };
+  explodableParts.push(m3Group);
+  interactiveTargets.push(m3Group);
+  root.add(m3Group);
+
+  // ============================================================================
+  // MODULE M4: Single-Stage High-Pressure Turbine (HPT) & Active Clearance Control (Sta. 4 -> Sta. 42)
+  // ============================================================================
+  const m4Spec = L2_CFM56_DATUM.coreSections[3];
+  const m4Group = new THREE.Group();
+  const hptRotorGroup = new THREE.Group();
+  const hptX = axialMmToX(1820);
+  const hptDiskR = 335 * MM_TO_L2;
+  const hptTipR = 458 * MM_TO_L2;
+
+  // Stage-1 NGV Stator Ring (42 Cooled Vanes at Sta. 4 = +1745mm)
+  const ngvX = axialMmToX(1748);
+  for (let v = 0; v < 36; v++) {
+    const ang = (v / 36) * Math.PI * 2;
+    const holder = new THREE.Group();
+    holder.position.x = ngvX;
+    holder.rotation.x = ang;
+    const vane = new THREE.Mesh(
+      new THREE.BoxGeometry(0.042, hptTipR - hptDiskR, 0.032),
+      materials.highTempAlloy
+    );
+    vane.position.y = hptDiskR + (hptTipR - hptDiskR) * 0.5;
+    vane.rotation.y = -0.65;
+    holder.add(vane);
+    m4Group.add(holder);
+  }
+
+  // HPT Single-Stage Rotor Disk + 72 Cooled Single-Crystal Blades (Spins with N2)
+  const hptDisk = new THREE.Mesh(
+    new THREE.CylinderGeometry(hptDiskR, hptDiskR * 0.52, 0.085, 36),
+    materials.turbineCrimson
+  );
+  hptDisk.rotation.z = Math.PI / 2;
+  hptDisk.position.x = hptX;
+  hptRotorGroup.add(hptDisk);
+
+  for (let b = 0; b < 48; b++) {
+    const ang = (b / 48) * Math.PI * 2;
+    const holder = new THREE.Group();
+    holder.position.x = hptX;
+    holder.rotation.x = ang;
+    const blade = new THREE.Mesh(
+      new THREE.BoxGeometry(0.046, hptTipR - hptDiskR, 0.034),
+      materials.turbineCrimson
+    );
+    blade.position.y = hptDiskR + (hptTipR - hptDiskR) * 0.5;
+    blade.rotation.y = 0.58;
+    holder.add(blade);
+    hptRotorGroup.add(holder);
+  }
+  animatedRotors.n2Parts.push(hptRotorGroup);
+  m4Group.add(hptRotorGroup);
+
+  // Active Clearance Control (ACC) Shroud & Cooling Manifold Ring
+  const accRing = new THREE.Mesh(
+    new THREE.TorusGeometry(hptTipR * 1.07, 0.026, 12, 36),
+    materials.portActiveGlow
+  );
+  accRing.rotation.y = Math.PI / 2;
+  accRing.position.x = hptX;
+  m4Group.add(accRing);
+
+  // L2->L3 MountingPort Marker (`PORT-HPT-ROTOR-SPLINE`)
+  const l3Port = L2_CFM56_DATUM.childMountingPorts[0];
+  const l3PortMarker = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.075, 1),
+    materials.portActiveGlow
+  );
+  l3PortMarker.position.set(hptX, hptTipR * 1.22, 0);
+  l3PortMarker.userData = {
+    isMountingPort: true,
+    portData: l3Port,
+    partId: l3Port.id,
+    title: `【L2→L3 标准挂载端口】${l3Port.name}`,
+    datum: `Ax.Sta +${l3Port.engineAxialMm}mm | Curvic Coupling Ø${l3Port.boltCircleMm}mm | 72 Fir-Tree Slots`,
+    material: l3Port.interfaceStandard,
+    description: l3Port.description,
+    drillDownLevel: 3
+  };
+  portMarkers.push(l3PortMarker);
+  interactiveTargets.push(l3PortMarker);
+  m4Group.add(l3PortMarker);
+
+  m4Group.userData = {
+    partId: m4Spec.id,
+    title: `${m4Spec.name}（点击下钻 L3 叶片枞树榫与气膜孔拆解）`,
+    datum: `${m4Spec.stationCode} | Ax.Sta +1730mm → +1910mm | 72 Rene N5 Single-Crystal Blades`,
+    material: 'Rene 88DT PM Disk + Rene N5 Single-Crystal Blades + EB-PVD TBC',
+    description: m4Spec.description,
+    drillDownLevel: 3,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(m4Spec.explodeAxialMm * MM_TO_L2, 0, 0)
+  };
+  explodableParts.push(m4Group);
+  interactiveTargets.push(m4Group);
+  root.add(m4Group);
+
+  // ============================================================================
+  // MODULE M5: 4-Stage Low-Pressure Turbine (LPT) & Turbine Rear Frame TRF (Sta. 495 -> Sta. 5 -> Sta. 8)
+  // ============================================================================
+  const m5Spec = L2_CFM56_DATUM.coreSections[4];
+  const m5Group = new THREE.Group();
+  const lptRotorGroup = new THREE.Group();
+
+  for (let stg = 0; stg < 4; stg++) {
+    const t = stg / 3;
+    const stgX = axialMmToX(1955 + stg * 86);
+    const rTip = (465 + t * 65) * MM_TO_L2;
+    const rHub = (235 - t * 35) * MM_TO_L2;
+
+    const lptDisk = new THREE.Mesh(
+      new THREE.CylinderGeometry(rHub, rHub * 0.65, 0.048, 28),
+      materials.stringerCyan
+    );
+    lptDisk.rotation.z = Math.PI / 2;
+    lptDisk.position.x = stgX;
+    lptRotorGroup.add(lptDisk);
+
+    const bLen = rTip - rHub;
+    for (let b = 0; b < 36; b++) {
+      const ang = (b / 36) * Math.PI * 2;
+      const holder = new THREE.Group();
+      holder.position.x = stgX;
+      holder.rotation.x = ang;
+      const blade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.036, bLen, 0.032),
+        materials.chromeAlloy
+      );
+      blade.position.y = rHub + bLen * 0.5;
+      blade.rotation.y = -0.45;
+      holder.add(blade);
+      lptRotorGroup.add(holder);
+    }
+  }
+  animatedRotors.n1Parts.push(lptRotorGroup);
+  m5Group.add(lptRotorGroup);
+
+  // Turbine Rear Frame (TRF @ Sta. 5 = +2290mm) + Aft Engine Mount Flange @ 12:00 + Exhaust Plug Cone
+  const trfX = axialMmToX(2290);
+  const trfOuterR = 515 * MM_TO_L2;
+  const trfRing = new THREE.Mesh(
+    new THREE.TorusGeometry(trfOuterR, 0.028, 12, 36),
+    materials.titaniumGold
+  );
+  trfRing.rotation.y = Math.PI / 2;
+  trfRing.position.x = trfX;
+  m5Group.add(trfRing);
+
+  for (let s = 0; s < 12; s++) {
+    const ang = (s / 12) * Math.PI * 2;
+    const holder = new THREE.Group();
+    holder.position.x = trfX;
+    holder.rotation.x = ang;
+    const strut = new THREE.Mesh(
+      new THREE.BoxGeometry(0.11, trfOuterR - 0.22, 0.022),
+      materials.titaniumGold
+    );
+    strut.position.y = 0.22 + (trfOuterR - 0.22) * 0.5;
+    holder.add(strut);
+    m5Group.add(holder);
+  }
+
+  // Rear Engine Mount Lug at 12:00 on TRF (`PORT-ENG-AFT-STA5` Mate)
+  const aftMountLug = new THREE.Mesh(
+    new THREE.BoxGeometry(0.18, 0.14, 0.24),
+    materials.portHighlight
+  );
+  aftMountLug.position.set(trfX, trfOuterR * 1.08, 0);
+  m5Group.add(aftMountLug);
+
+  // Exhaust Centerbody Tailcone Plug (Sta. 8)
+  const tailPlug = new THREE.Mesh(
+    new THREE.ConeGeometry(0.28, 0.56, 24),
+    materials.highTempAlloy
+  );
+  tailPlug.rotation.z = -Math.PI / 2;
+  tailPlug.position.x = axialMmToX(2460);
+  m5Group.add(tailPlug);
+
+  m5Group.userData = {
+    partId: m5Spec.id,
+    title: m5Spec.name,
+    datum: `${m5Spec.stationCode} | Ax.Sta +1910mm → +2508mm | 4 LPT Stages + TRF Sta. 5`,
+    material: 'Inconel 718 / Rene 41 Blades + Inconel 718 Cast TRF Strut Ring',
+    description: m5Spec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(m5Spec.explodeAxialMm * MM_TO_L2, 0, 0)
+  };
+  explodableParts.push(m5Group);
+  interactiveTargets.push(m5Group);
+  root.add(m5Group);
+
+  // ============================================================================
+  // MODULE M6: Accessory Drive System (IGB + Radial Drive Shaft RDS + TGB + AGB @ 6:00)
+  // ============================================================================
+  const m6Spec = L2_CFM56_DATUM.coreSections[5];
+  const m6Group = new THREE.Group();
+  const rdsX = axialMmToX(740); // Passes vertically down through 6 o'clock Fan Frame strut
+
+  // Central Inlet Gearbox (IGB Bevel Gear Pair at N2 nose)
+  const igbBevel = new THREE.Mesh(
+    new THREE.ConeGeometry(0.18, 0.14, 20),
+    materials.portHighlight
+  );
+  igbBevel.rotation.z = -Math.PI / 2;
+  igbBevel.position.set(rdsX, 0, 0);
+  m6Group.add(igbBevel);
+
+  // Radial Drive Shaft (RDS) descending vertically to 6 o'clock Transfer Gearbox (TGB)
+  const rdsLen = 820 * MM_TO_L2;
+  const rdsShaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.026, 0.026, rdsLen, 14),
+    materials.portHighlight
+  );
+  rdsShaft.position.set(rdsX, -rdsLen * 0.5, 0);
+  m6Group.add(rdsShaft);
+
+  // Crescent-shaped Accessory Gearbox (AGB) mounted at 6 o'clock under Fan Case + Starter/IDG/Fuel Pump pods
+  const agbArc = new THREE.Mesh(
+    new THREE.TorusGeometry(fanOuterR * 0.94, 0.11, 12, 24, Math.PI * 0.52),
+    materials.agbEmerald
+  );
+  agbArc.rotation.y = Math.PI / 2;
+  agbArc.rotation.x = -Math.PI * 0.76;
+  agbArc.position.x = axialMmToX(640);
+  m6Group.add(agbArc);
+
+  [-0.28, 0, 0.28].forEach((zOff, idx) => {
+    const pumpPod = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.085, 0.085, 0.34, 16),
+      idx === 1 ? materials.titaniumGold : materials.chromeAlloy
+    );
+    pumpPod.rotation.z = Math.PI / 2;
+    pumpPod.position.set(axialMmToX(820), -fanOuterR * 0.92, zOff);
+    m6Group.add(pumpPod);
+  });
+
+  m6Group.userData = {
+    partId: m6Spec.id,
+    title: m6Spec.name,
+    datum: `${m6Spec.stationCode} | Ax.Sta +480mm → +1120mm | R=840mm @ 6:00 Clocking`,
+    material: 'Cast Aluminum 356-T6 Gearbox Housing + Carburized AISI 9310 Bevel Gears',
+    description: m6Spec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(
+      m6Spec.explodeAxialMm * MM_TO_L2,
+      m6Spec.explodeRadialMm * MM_TO_L2,
+      0
+    )
+  };
+  explodableParts.push(m6Group);
+  interactiveTargets.push(m6Group);
+  root.add(m6Group);
+
+  return {
+    root,
+    explodableParts,
+    interactiveTargets,
+    portMarkers,
+    animatedRotors
+  };
+}
+
+
+// ============================================================================
+// MODULE: modules/l3-hpt-combustor-core.js
+// ============================================================================
+/**
+ * L3 Module: High-Pressure Turbine (HPT) Rotor Disk, Fir-Tree Single-Crystal Blades,
+ * Stage-1 Cooled NGV Ring, Active Clearance Control Shroud & Annular Combustor Swirlers
+ *
+ * Modeled from Rolls-Royce "The Jet Engine" (Turbines & Combustion Chapters) and CFMI CTC-044
+ */
+function buildL3HptCombustorCore(materials) {
+  const root = new THREE.Group();
+  root.name = 'L3_HPT_COMBUSTOR_MICRO_ASSEMBLY';
+  const explodableParts = [];
+  const interactiveTargets = [];
+  const animatedRotors = { n2Parts: [] };
+
+  // 0. Ghost Context Reference of Parent L2 N2 Shaft & HPC Rear Case
+  const ghostL2 = new THREE.Group();
+  const n2GhostDrum = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.45, 0.52, 3.2, 28, 4, true),
+    materials.ghostWireframe
+  );
+  n2GhostDrum.rotation.z = Math.PI / 2;
+  n2GhostDrum.position.x = -0.9;
+  ghostL2.add(n2GhostDrum);
+
+  const axisLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-3.4, 0, 0), new THREE.Vector3(2.8, 0, 0)]),
+    materials.datumLineCyan
+  );
+  ghostL2.add(axisLine);
+  root.add(ghostL2);
+
+  // 1. Rene 88DT Powder-Metallurgy HPT Rotor Disk with Curvic Coupling & 72 Broached Fir-Tree Rim Slots
+  const diskSpec = L3_HPT_MICRO_DATUM.components[0];
+  const diskGroup = new THREE.Group();
+  const diskRimR = 1.12;
+  const diskBoreR = 0.44;
+
+  // Web & Thick Bore Hub Profile via LatheGeometry
+  const diskProfile = [
+    new THREE.Vector2(diskBoreR, -0.22),
+    new THREE.Vector2(diskBoreR, 0.22),
+    new THREE.Vector2(diskBoreR * 1.35, 0.19),
+    new THREE.Vector2(diskRimR * 0.78, 0.08),
+    new THREE.Vector2(diskRimR, 0.16),
+    new THREE.Vector2(diskRimR, -0.16),
+    new THREE.Vector2(diskRimR * 0.78, -0.08),
+    new THREE.Vector2(diskBoreR * 1.35, -0.19),
+    new THREE.Vector2(diskBoreR, -0.22)
+  ];
+  const diskGeo = new THREE.LatheGeometry(diskProfile, 48);
+  diskGeo.rotateZ(Math.PI / 2);
+  const diskMesh = new THREE.Mesh(diskGeo, materials.titaniumGold);
+  diskGroup.add(diskMesh);
+
+  // Curvic Coupling Bolt Circle & Cooling Air Inducer Holes on Disk Face
+  const curvicRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.76, 0.032, 12, 36),
+    materials.portHighlight
+  );
+  curvicRing.rotation.y = Math.PI / 2;
+  curvicRing.position.x = -0.11;
+  diskGroup.add(curvicRing);
+
+  diskGroup.userData = {
+    partId: diskSpec.id,
+    title: diskSpec.name,
+    datum: diskSpec.datumStation,
+    material: diskSpec.material,
+    description: diskSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(0, 0, 0)
+  };
+  interactiveTargets.push(diskGroup);
+  root.add(diskGroup);
+
+  // 2. 72 Single-Crystal Rene N5 Film-Cooled Turbine Blades with 3-Tang Fir-Tree Roots
+  // Top 12 blades are built as an independently explodable sub-assembly so user can inspect the Fir-Tree Root & Serpentine Cooling Channels!
+  const bladeSpec = L3_HPT_MICRO_DATUM.components[1];
+  const fixedBladesGroup = new THREE.Group();
+  const extractableBladesGroup = new THREE.Group();
+  const totalBlades = 48; // High-density visual representation of the 72-blade ring
+
+  for (let i = 0; i < totalBlades; i++) {
+    const ang = (i / totalBlades) * Math.PI * 2;
+    const isExtractableSector = i < 8 || i >= totalBlades - 4; // Top 12 o'clock sector extracts outward during explode
+
+    const bladeUnit = new THREE.Group();
+    bladeUnit.rotation.x = ang;
+
+    // 3-Tang Stepped Fir-Tree Root (枞树形三齿榫头)
+    for (let tang = 0; tang < 3; tang++) {
+      const tangWidth = 0.042 + tang * 0.014;
+      const tangMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.26, 0.032, tangWidth),
+        materials.portHighlight
+      );
+      tangMesh.position.y = diskRimR - 0.09 + tang * 0.036;
+      bladeUnit.add(tangMesh);
+    }
+
+    // Blade Platform (Shroud Buttress)
+    const platform = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.025, 0.12),
+      materials.highTempAlloy
+    );
+    platform.position.y = diskRimR + 0.02;
+    bladeUnit.add(platform);
+
+    // Aerofoil with Camber Twist + Internal Serpentine Cooling Channel Cutaway on Extractable Sector
+    const foilHeight = 0.56;
+    const foil = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, foilHeight, 0.055),
+      isExtractableSector ? materials.turbineCrimson : materials.highTempAlloy
+    );
+    foil.position.y = diskRimR + 0.03 + foilHeight * 0.5;
+    foil.rotation.y = 0.52;
+    bladeUnit.add(foil);
+
+    // Showerhead Film-Cooling Holes / Internal Serpentine Passage Tubes on Extractable Blades
+    if (isExtractableSector) {
+      for (let c = -1; c <= 1; c++) {
+        const coolChannel = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.009, 0.009, foilHeight * 0.92, 8),
+          materials.n1ShaftCyan
+        );
+        coolChannel.position.set(c * 0.052, diskRimR + 0.04 + foilHeight * 0.5, 0.015);
+        bladeUnit.add(coolChannel);
+      }
+    }
+
+    if (isExtractableSector) {
+      extractableBladesGroup.add(bladeUnit);
+    } else {
+      fixedBladesGroup.add(bladeUnit);
+    }
+  }
+
+  diskGroup.add(fixedBladesGroup);
+
+  extractableBladesGroup.userData = {
+    partId: bladeSpec.id,
+    title: bladeSpec.name,
+    datum: bladeSpec.datumStation,
+    material: bladeSpec.material,
+    description: bladeSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(bladeSpec.explodeVec.x, bladeSpec.explodeVec.y, bladeSpec.explodeVec.z)
+  };
+  explodableParts.push(extractableBladesGroup);
+  interactiveTargets.push(extractableBladesGroup);
+  root.add(extractableBladesGroup);
+
+  // 3. Stage-1 High-Pressure Nozzle Guide Vane (NGV) Stator Ring (42 Cooled Vanes @ Sta. 4)
+  const ngvSpec = L3_HPT_MICRO_DATUM.components[2];
+  const ngvGroup = new THREE.Group();
+  ngvGroup.position.x = -0.52;
+
+  const ngvInnerRing = new THREE.Mesh(
+    new THREE.CylinderGeometry(diskRimR, diskRimR, 0.24, 40, 1, true),
+    materials.structuralFrame
+  );
+  ngvInnerRing.rotation.z = Math.PI / 2;
+  ngvGroup.add(ngvInnerRing);
+
+  const ngvOuterRing = new THREE.Mesh(
+    new THREE.CylinderGeometry(diskRimR + 0.58, diskRimR + 0.58, 0.24, 40, 1, true, 0, Math.PI * 1.65),
+    materials.structuralFrame
+  );
+  ngvOuterRing.rotation.z = Math.PI / 2;
+  ngvOuterRing.rotation.x = -0.35;
+  ngvGroup.add(ngvOuterRing);
+
+  for (let v = 0; v < 36; v++) {
+    const ang = (v / 36) * Math.PI * 2;
+    const vHolder = new THREE.Group();
+    vHolder.rotation.x = ang;
+    const vane = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 0.55, 0.048),
+      materials.chromeAlloy
+    );
+    vane.position.y = diskRimR + 0.28;
+    vane.rotation.y = -0.68;
+    vHolder.add(vane);
+    ngvGroup.add(vHolder);
+  }
+
+  ngvGroup.userData = {
+    partId: ngvSpec.id,
+    title: ngvSpec.name,
+    datum: ngvSpec.datumStation,
+    material: ngvSpec.material,
+    description: ngvSpec.description,
+    basePos: ngvGroup.position.clone(),
+    explodeVec: new THREE.Vector3(ngvSpec.explodeVec.x, ngvSpec.explodeVec.y, ngvSpec.explodeVec.z)
+  };
+  explodableParts.push(ngvGroup);
+  interactiveTargets.push(ngvGroup);
+  root.add(ngvGroup);
+
+  // 4. HPT Active Clearance Control (ACC) Shroud & Honeycomb Abradable Seal Segments
+  const accSpec = L3_HPT_MICRO_DATUM.components[3];
+  const accGroup = new THREE.Group();
+  const shroudR = diskRimR + 0.62;
+
+  const shroudArc = new THREE.Mesh(
+    new THREE.CylinderGeometry(shroudR, shroudR, 0.44, 40, 1, true, -Math.PI * 0.35, Math.PI * 1.15),
+    materials.cutawayCaseBlue
+  );
+  shroudArc.rotation.z = Math.PI / 2;
+  accGroup.add(shroudArc);
+
+  // External Impingement Cooling Air Manifold Tubes (ACC)
+  [-0.14, 0, 0.14].forEach((xOff) => {
+    const manifoldTube = new THREE.Mesh(
+      new THREE.TorusGeometry(shroudR * 1.08, 0.028, 12, 40, Math.PI * 1.25),
+      materials.stringerCyan
+    );
+    manifoldTube.rotation.y = Math.PI / 2;
+    manifoldTube.rotation.x = -Math.PI * 0.35;
+    manifoldTube.position.x = xOff;
+    accGroup.add(manifoldTube);
+  });
+
+  accGroup.userData = {
+    partId: accSpec.id,
+    title: accSpec.name,
+    datum: accSpec.datumStation,
+    material: accSpec.material,
+    description: accSpec.description,
+    basePos: new THREE.Vector3(0, 0, 0),
+    explodeVec: new THREE.Vector3(accSpec.explodeVec.x, accSpec.explodeVec.y, accSpec.explodeVec.z)
+  };
+  explodableParts.push(accGroup);
+  interactiveTargets.push(accGroup);
+  root.add(accGroup);
+
+  // 5. Annular Combustor Dome Liner & 20 Duplex Fuel Nozzles / Swirlers (Sta. 3 -> Sta. 39)
+  const combSpec = L3_HPT_MICRO_DATUM.components[4];
+  const combGroup = new THREE.Group();
+  combGroup.position.x = -1.35;
+
+  const outerFlameTube = new THREE.Mesh(
+    new THREE.CylinderGeometry(diskRimR + 0.56, diskRimR + 0.58, 0.72, 40, 1, true, 0, Math.PI * 1.55),
+    materials.combustorAmber
+  );
+  outerFlameTube.rotation.z = Math.PI / 2;
+  outerFlameTube.rotation.x = -0.4;
+  combGroup.add(outerFlameTube);
+
+  const innerFlameTube = new THREE.Mesh(
+    new THREE.CylinderGeometry(diskRimR - 0.04, diskRimR, 0.72, 40, 1, true),
+    materials.combustorAmber
+  );
+  innerFlameTube.rotation.z = Math.PI / 2;
+  combGroup.add(innerFlameTube);
+
+  // 20 Duplex Fuel Nozzles & Venturi Swirlers
+  const swirlerR = diskRimR + 0.27;
+  for (let n = 0; n < 20; n++) {
+    const ang = (n / 20) * Math.PI * 2;
+    const y = Math.cos(ang) * swirlerR;
+    const z = Math.sin(ang) * swirlerR;
+
+    const swirlerCup = new THREE.Mesh(
+      new THREE.TorusGeometry(0.085, 0.018, 10, 20),
+      materials.titaniumGold
+    );
+    swirlerCup.rotation.y = Math.PI / 2;
+    swirlerCup.position.set(-0.34, y, z);
+    combGroup.add(swirlerCup);
+
+    const fuelFeedArm = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 0.36, 10),
+      materials.chromeAlloy
+    );
+    fuelFeedArm.position.set(-0.42, y * 1.14, z * 1.14);
+    fuelFeedArm.rotation.x = ang;
+    combGroup.add(fuelFeedArm);
+
+    const vortexCone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.09, 0.55, 14),
+      materials.portActiveGlow
+    );
+    vortexCone.rotation.z = -Math.PI / 2;
+    vortexCone.position.set(0.02, y, z);
+    combGroup.add(vortexCone);
+  }
+
+  combGroup.userData = {
+    partId: combSpec.id,
+    title: combSpec.name,
+    datum: combSpec.datumStation,
+    material: combSpec.material,
+    description: combSpec.description,
+    basePos: combGroup.position.clone(),
+    explodeVec: new THREE.Vector3(combSpec.explodeVec.x, combSpec.explodeVec.y, combSpec.explodeVec.z)
+  };
+  explodableParts.push(combGroup);
+  interactiveTargets.push(combGroup);
+  root.add(combGroup);
+
+  return {
+    root,
+    explodableParts,
+    interactiveTargets,
+    animatedRotors
+  };
+}
+
+
+// ============================================================================
+// MODULE: modules/l0-suspension-bridge.js
+// ============================================================================
+/**
+ * Second Root Twin System: Suspension Bridge L0 -> L1 -> L2 Hierarchy
+ * Modeled from Wai-Fah Chen & Lian Duan — "Bridge Engineering Handbook, Chapter 18: Suspension Bridges"
+ *
+ * Spatial Datum Coordinate System:
+ *   - Chainage Station: K0+165 (West Anchorage) -> K0+500 (West Pylon) -> K1+000 (Midspan) -> K1+500 (East Pylon) -> K1+835 (East Anchorage)
+ *   - Elevation (EL): EL +0.0m (Mean Sea Level), EL +65.0m (Deck Navigation Clearance), EL +195.0m (Tower Top Saddle)
+ *   - Transverse Offset (CL): CL ±16.5m (Main Cable Planes / 33.0m Orthotropic Steel Box Girder Width)
+ */
+function buildSuspensionBridgeTwin(materials, subLevel = 0) {
+  const root = new THREE.Group();
+  root.name = `BRIDGE_CH18_L${subLevel}`;
+  const explodableParts = [];
+  const interactiveTargets = [];
+  const portMarkers = [];
+
+  if (subLevel === 0) {
+    // ============================================================================
+    // L0: Full Suspension Bridge Span (Portal Pylons, Parabolic Main Cables, Hangers, Box Girder Deck & Gravity Anchorages)
+    // ============================================================================
+    const pylonGroup = new THREE.Group();
+    [500.0, 1500.0].forEach((chainage, idx) => {
+      const towerUnit = new THREE.Group();
+      [-16.5, 16.5].forEach((clOff) => {
+        const basePos = bridgeDatumToWorld(chainage, 0.0, clOff);
+        const topPos = bridgeDatumToWorld(chainage, 195.0, clOff);
+        const h = topPos.y - basePos.y;
+        const leg = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, h, 0.16),
+          materials.titaniumGold
+        );
+        leg.position.set(basePos.x, basePos.y + h * 0.5, basePos.z);
+        towerUnit.add(leg);
+      });
+
+      // 3 Portal Cross-Strut Beams at EL +58m, EL +125m, EL +188m
+      [58.0, 125.0, 188.0].forEach((el) => {
+        const beamPos = bridgeDatumToWorld(chainage, el, 0);
+        const spanZ = Math.abs(bridgeDatumToWorld(chainage, el, 16.5).z) * 2;
+        const crossStrut = new THREE.Mesh(
+          new THREE.BoxGeometry(0.14, 0.11, spanZ),
+          materials.structuralFrame
+        );
+        crossStrut.position.set(beamPos.x, beamPos.y, 0);
+        towerUnit.add(crossStrut);
+      });
+
+      // Caisson Pile Cap Foundation at EL +0.0m
+      const caissonPos = bridgeDatumToWorld(chainage, -6.0, 0);
+      const caisson = new THREE.Mesh(
+        new THREE.BoxGeometry(0.55, 0.18, 0.95),
+        materials.structuralFrame
+      );
+      caisson.position.set(caissonPos.x, caissonPos.y, 0);
+      towerUnit.add(caisson);
+      pylonGroup.add(towerUnit);
+    });
+
+    pylonGroup.userData = {
+      partId: 'BRG-L0-PYLONS',
+      title: '双门式钢筋混凝土主索塔与群桩沉井基础 (Portal Pylon Towers @ K0+500 & K1+500)',
+      datum: 'K0+500 & K1+500 | EL -15.0m → EL +195.0m | CL ±16.5m',
+      material: 'C60 High-Performance Concrete Tower Legs + Prestressed Portal Cross-Beams',
+      description: '依据《Bridge Engineering Handbook》第 18 章门式桥塔规范建模：设上、中、下三道横梁抵抗横桥向风载，塔顶 EL +195.0m 承载主索鞍。',
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, 0.25, 0)
+    };
+    explodableParts.push(pylonGroup);
+    interactiveTargets.push(pylonGroup);
+    root.add(pylonGroup);
+
+    // 2. Parabolic PPWS Main Cables (f/L = 1:9.52) & Vertical Suspender Hangers
+    const cableSystemGroup = new THREE.Group();
+    [-16.5, 16.5].forEach((clOff) => {
+      const cablePts = [];
+      for (let ch = 165; ch <= 1835; ch += 25) {
+        let el = 65.0;
+        if (ch < 500) {
+          const t = (ch - 165) / (500 - 165);
+          el = 28.0 + (195.0 - 28.0) * t - 18.0 * t * (1 - t);
+        } else if (ch <= 1500) {
+          // Exact Catenary/Parabola y = 4*f*(x/L)^2 with sag f = 105m (EL +195m at towers -> EL +90m at midspan K1+000)
+          const u = (ch - 1000) / 500; // -1 .. +1
+          el = 90.0 + 105.0 * (u * u);
+        } else {
+          const t = (1835 - ch) / (1835 - 1500);
+          el = 28.0 + (195.0 - 28.0) * t - 18.0 * t * (1 - t);
+        }
+        const wp = bridgeDatumToWorld(ch, el, clOff);
+        cablePts.push(new THREE.Vector3(wp.x, wp.y, wp.z));
+
+        // Vertical Suspender Hanger every 50m along Main & Side Spans
+        if (ch >= 220 && ch <= 1780 && Math.abs(ch - 500) > 20 && Math.abs(ch - 1500) > 20 && ch % 50 === 0) {
+          const deckWp = bridgeDatumToWorld(ch, 65.0, clOff);
+          const hangerGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(wp.x, wp.y, wp.z),
+            new THREE.Vector3(deckWp.x, deckWp.y, deckWp.z)
+          ]);
+          cableSystemGroup.add(new THREE.Line(hangerGeo, materials.datumLineCyan));
+        }
+      }
+      const mainCableCurve = new THREE.CatmullRomCurve3(cablePts);
+      const cableMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(mainCableCurve, 96, 0.032, 10, false),
+        materials.n2ShaftGold
+      );
+      cableSystemGroup.add(cableMesh);
+    });
+
+    cableSystemGroup.userData = {
+      partId: 'BRG-L0-MAIN-CABLES',
+      title: '1860MPa 预制平行钢丝主缆（PPWS）与销接吊索体系 (Main Cables f/L=1:9.52 & Hangers)',
+      datum: 'K0+165 → K1+835 | Tower Saddle EL +195.0m → Midspan EL +90.0m | CL ±16.5m',
+      material: 'Ø5.2mm Galvanized 1860 MPa Parallel Wire Strands (127 Strands × 127 Wires)',
+      description: '主跨垂跨比 f/L = 105m / 1000m = 1:9.52，严格遵循陈惠发《桥梁工程手册》第 18.3 节悬链线/抛物线矢高方程计算每个吊点高程。',
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, 0.95, 0)
+    };
+    explodableParts.push(cableSystemGroup);
+    interactiveTargets.push(cableSystemGroup);
+    root.add(cableSystemGroup);
+
+    // 3. Streamlined Orthotropic Steel Box Girder Deck (K0+200 to K1+800 @ EL +65.0m)
+    const deckGroup = new THREE.Group();
+    const pWest = bridgeDatumToWorld(200, 65.0, 0);
+    const pEast = bridgeDatumToWorld(1800, 65.0, 0);
+    const deckLen = pEast.x - pWest.x;
+    const deckWidth = Math.abs(bridgeDatumToWorld(1000, 65.0, 16.5).z) * 2.15;
+
+    const deckMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(deckLen, 0.075, deckWidth),
+      materials.stringerCyan
+    );
+    deckMesh.position.set(0, pWest.y, 0);
+    deckGroup.add(deckMesh);
+
+    deckGroup.userData = {
+      partId: 'BRG-L0-BOX-DECK',
+      title: '流线型扁平闭口正交异性钢箱梁加劲桥面 (Aerodynamic Orthotropic Steel Box Girder)',
+      datum: 'K0+200 → K1+800 | EL +65.0m | Width 33.0m × Depth 3.5m',
+      material: 'Q345qD Structural Bridge Steel with U-Trough Longitudinal Ribs',
+      description: '采用扁平流线型带风嘴闭口钢箱梁抵抗颤振（Flutter），点击跨中接口可下钻查看内部 U 形加劲肋与横隔板构造。',
+      drillDownLevel: 2,
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, -0.55, 0)
+    };
+    explodableParts.push(deckGroup);
+    interactiveTargets.push(deckGroup);
+    root.add(deckGroup);
+
+    // 4. West & East Gravity Anchorages (K0+165 & K1+835)
+    const anchorGroup = new THREE.Group();
+    [165.0, 1835.0].forEach((ch, idx) => {
+      const ap = bridgeDatumToWorld(ch, 16.0, 0);
+      const block = new THREE.Mesh(
+        new THREE.BoxGeometry(0.95, 0.52, 0.88),
+        materials.combustorAmber
+      );
+      block.position.set(ap.x, ap.y, 0);
+      anchorGroup.add(block);
+    });
+    anchorGroup.userData = {
+      partId: 'BRG-L0-ANCHORAGES',
+      title: '东西两岸重力式混凝土锚碇与散索鞍室 (West & East Gravity Anchorages @ K0+165 / K1+835)',
+      datum: 'K0+165 & K1+835 | EL -12.0m → EL +28.0m | Deadweight Friction Anchor',
+      material: 'Mass Concrete Gravity Block + Cast-Steel Splay Saddle + Prestressed Strand Shoes',
+      description: '通过巨型重力式混凝土锚块自重与基底摩阻力平衡主缆 260 MN 水平拉力。',
+      drillDownLevel: 1,
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, -0.35, 0)
+    };
+    explodableParts.push(anchorGroup);
+    interactiveTargets.push(anchorGroup);
+    root.add(anchorGroup);
+
+    // 5. Standard Bridge MountingPorts
+    BRIDGE_CH18_DATUM.mountingPorts.forEach((port) => {
+      const marker = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.14, 1),
+        materials.portActiveGlow
+      );
+      marker.position.set(port.worldPos.x, port.worldPos.y, port.worldPos.z);
+      marker.userData = {
+        isMountingPort: true,
+        portData: port,
+        partId: port.id,
+        title: `【桥梁传力节点端口】${port.name}`,
+        datum: port.datumCoord,
+        material: port.interfaceStandard,
+        description: port.description,
+        drillDownLevel: port.childLevel === 'L2' ? 2 : 1,
+        basePos: marker.position.clone(),
+        explodeVec: new THREE.Vector3(0, 0.35, 0)
+      };
+      explodableParts.push(marker);
+      interactiveTargets.push(marker);
+      portMarkers.push(marker);
+      root.add(marker);
+    });
+  } else {
+    // ============================================================================
+    // L1 / L2 Detailed Bridge Subsystem Drill-Down:
+    // Orthotropic Steel Box Girder Segment (U-Ribs, Diaphragms, Wind Fairings, Cable Clamp & Tower Saddle)
+    // ============================================================================
+    const topPlate = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.05, 2.8), materials.aeroSkin);
+    topPlate.position.y = 0.45;
+    // 8 Trapezoidal U-Ribs welded under orthotropic deck plate
+    for (let u = -3.5; u <= 3.5; u += 1.0) {
+      const uRib = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.09, 0.14), materials.stringerCyan);
+      uRib.position.set(0, -0.06, u * 0.34);
+      topPlate.add(uRib);
+    }
+    topPlate.userData = {
+      partId: 'BRG-SUB-ORTHOTROPIC-DECK',
+      title: '正交异性钢桥面板与闭口 U 形纵向加劲肋 (Orthotropic Deck Plate + U-Trough Stiffeners)',
+      datum: 'K1+000 ±12.0m | EL +66.75m | 16mm Deck Plate + 8mm U-Ribs @ 600mm Pitch',
+      material: 'Q345qD Steel Plate with Automated80% Penetration Fillet Welds',
+      description: '正交异性桥面板直接承受车轮局部荷载并作为主梁上翼缘参与全桥纵向抗弯。',
+      basePos: topPlate.position.clone(),
+      explodeVec: new THREE.Vector3(0, 1.15, 0)
+    };
+    explodableParts.push(topPlate);
+    interactiveTargets.push(topPlate);
+    root.add(topPlate);
+
+    // Internal Transverse Diaphragm Bulkheads (横隔板)
+    const diaphGroup = new THREE.Group();
+    [-1.1, 0, 1.1].forEach((xOff) => {
+      const diaph = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.82, 2.75), materials.titaniumGold);
+      diaph.position.set(xOff, 0, 0);
+      diaphGroup.add(diaph);
+    });
+    diaphGroup.userData = {
+      partId: 'BRG-SUB-DIAPHRAGMS',
+      title: '钢箱梁实腹式横隔板与过人孔隔仓 (Transverse Bulkhead Diaphragms @ 3.2m Spacing)',
+      datum: 'K0+996.8 / K1+000.0 / K1+003.2 | Depth 3.5m',
+      material: 'Q345qD 12mm Diaphragm Web with Cutout Stiffener Rings',
+      description: '维持扁平钢箱梁截面抗扭刚度并将桥面荷载横向传递至两侧吊索耳板。',
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, 0, 0)
+    };
+    interactiveTargets.push(diaphGroup);
+    root.add(diaphGroup);
+
+    // Bottom Flange & Aerodynamic Wind Nose Fairings (抗风嘴与底板)
+    const botPlate = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.05, 2.2), materials.structuralFrame);
+    botPlate.position.y = -0.45;
+    [-1, 1].forEach((side) => {
+      const windNose = new THREE.Mesh(new THREE.ConeGeometry(0.45, 3.2, 3), materials.combustorAmber);
+      windNose.rotation.z = Math.PI / 2;
+      windNose.rotation.x = side > 0 ? 0 : Math.PI;
+      windNose.position.set(0, 0.45, side * 1.45);
+      botPlate.add(windNose);
+    });
+    botPlate.userData = {
+      partId: 'BRG-SUB-WIND-FAIRING',
+      title: '钢箱梁下翼缘底板与流线型三角形抗风嘴 (Bottom Flange & Triangular Wind Fairings)',
+      datum: 'K1+000 | EL +63.25m | CL ±16.5m Cantilever Tip',
+      material: 'Q345qD Steel Plate + Internal Corrosion Dehumidification Ducts',
+      description: '55° 尖角风嘴显著降低横风漩涡脱落激励，将颤振临界风速提升至 75 m/s 以上。',
+      basePos: botPlate.position.clone(),
+      explodeVec: new THREE.Vector3(0, -1.05, 0)
+    };
+    explodableParts.push(botPlate);
+    interactiveTargets.push(botPlate);
+    root.add(botPlate);
+
+    // Cast-Steel Main Cable Clamp & Pin-Ended Hanger Socket (主缆索夹与吊索耳板锚头)
+    const saddleClampGroup = new THREE.Group();
+    [-1.42, 1.42].forEach((zOff) => {
+      const mainCableSeg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.4, 24), materials.n2ShaftGold);
+      mainCableSeg.rotation.z = Math.PI / 2;
+      mainCableSeg.position.set(0, 1.45, zOff);
+      saddleClampGroup.add(mainCableSeg);
+
+      const cableBand = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.42, 24), materials.portActiveGlow);
+      cableBand.rotation.z = Math.PI / 2;
+      cableBand.position.set(0, 1.45, zOff);
+      saddleClampGroup.add(cableBand);
+
+      const pinLug = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.32, 0.08), materials.portHighlight);
+      pinLug.position.set(0, 0.58, zOff);
+      saddleClampGroup.add(pinLug);
+    });
+    saddleClampGroup.userData = {
+      partId: 'BRG-SUB-CABLE-CLAMP',
+      title: '铸钢对开式主缆索夹、高强螺杆与吊索销接耳板 (Cast-Steel Cable Band & Pin-Ended Hanger Lug)',
+      datum: 'K1+000 | CL ±16.5m | High-Strength Bolt Preload 650 kN',
+      material: 'ZG270-500 Cast Steel Split Band + 40CrNiMoA Tension Bolts',
+      description: '通过高强螺杆环向夹紧主缆产生抗滑摩擦力，经销轴连接竖向吊索与钢箱梁吊点耳板。',
+      basePos: new THREE.Vector3(0, 0, 0),
+      explodeVec: new THREE.Vector3(0, 0.65, 0)
+    };
+    explodableParts.push(saddleClampGroup);
+    interactiveTargets.push(saddleClampGroup);
+    root.add(saddleClampGroup);
+  }
+
+  return {
+    root,
+    explodableParts,
+    interactiveTargets,
+    portMarkers
+  };
+}
+
+
+// ============================================================================
+// MODULE: modules/cad-datum-overlay.js
+// ============================================================================
+/**
+ * CAD Datum Ruler, Station Planes & 3D Technical Callout Label Builder
+ * Renders authentic industrial station ticks (FS/STA, BL/WBL, WL, Engine Axial Sta., Chainage/EL) in 3D space.
+ */
+function createCadLabelSprite(text, colorHex = '#38bdf8', scaleWidth = 0.85) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 96;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = 'rgba(7, 12, 22, 0.86)';
+  ctx.strokeStyle = colorHex;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(6, 10, 500, 76, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = 'bold 28px "JetBrains Mono", "SFMono-Regular", Consolas, monospace';
+  ctx.fillStyle = colorHex;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 48);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(scaleWidth, scaleWidth * (96 / 512), 1);
+  return sprite;
+}
+function buildCadDatumRuler(domain, level, materials) {
+  const group = new THREE.Group();
+  group.name = `CAD_DATUM_RULER_${domain}_L${level}`;
+
+  if (domain === 'aircraft') {
+    if (level === 0) {
+      // Fuselage Longitudinal Station (FS / STA) Ruler Axis along WL 120.0, BL 0.0
+      const pNose = fsBlWlToWorld(130.0, 0, 118.0);
+      const pTail = fsBlWlToWorld(1217.0, 0, 118.0);
+      group.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(pNose.x, pNose.y, 0),
+            new THREE.Vector3(pTail.x, pTail.y, 0)
+          ]),
+          materials.datumLineCyan
+        )
+      );
+
+      const keyFuselageTicks = [
+        { sta: 130.0, label: 'STA 130 (Sec 41 Nose)' },
+        { sta: 360.0, label: 'STA 360 (Sec 41/43)' },
+        { sta: 540.0, label: 'STA 540 (Wing Box Fwd)' },
+        { sta: 663.75, label: 'STA 663.75 (Wing Box Aft)' },
+        { sta: 727.0, label: 'STA 727 (Sec 44/46)' },
+        { sta: 887.0, label: 'STA 887 (Sec 46/47)' },
+        { sta: 1016.0, label: 'STA 1016 (Aft Bulkhead)' },
+        { sta: 1217.0, label: 'STA 1217 (APU Tailcone)' }
+      ];
+
+      keyFuselageTicks.forEach((tk, idx) => {
+        const pt = fsBlWlToWorld(tk.sta, 0, 118.0);
+        const topPt = fsBlWlToWorld(tk.sta, 0, 315.0);
+        group.add(
+          new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(pt.x, pt.y - 0.12, 0),
+              new THREE.Vector3(pt.x, topPt.y, 0)
+            ]),
+            materials.datumLineDim
+          )
+        );
+        const lbl = createCadLabelSprite(tk.label, idx === 2 || idx === 3 ? '#f59e0b' : '#38bdf8', 0.95);
+        lbl.position.set(pt.x, pt.y - (idx % 2 === 0 ? 0.22 : 0.38), 0);
+        group.add(lbl);
+      });
+
+      // Wing Buttock Line (WBL) Ruler at STA 518.0
+      const wblTicks = [
+        { wbl: -680.4, label: 'WBL -680.4 (LH Wingtip)' },
+        { wbl: -190.97, label: 'CL NAC WBL -190.97 (WS 204.25)', gold: true },
+        { wbl: 190.97, label: 'CL NAC WBL +190.97 (WS 204.25)', gold: true },
+        { wbl: 680.4, label: 'WBL +680.4 (RH Wingtip)' }
+      ];
+      wblTicks.forEach((wt) => {
+        const wp = fsBlWlToWorld(518.0, wt.wbl, 192.0);
+        const lbl = createCadLabelSprite(wt.label, wt.gold ? '#fbbf24' : '#34d399', 1.05);
+        lbl.position.set(wp.x - 0.25, wp.y + 0.35, wp.z);
+        group.add(lbl);
+      });
+    } else if (level === 1) {
+      // L1 Pylon & Nacelle Station Ticks
+      const l1Ticks = [
+        { x: -1.62, y: -1.35, label: 'STA 452.0 | Engine Sta. 0 Intake Lip' },
+        { x: -0.55, y: 0.95, label: 'PORT-ENG-FWD-STA12 (Fan Frame Mount)', gold: true },
+        { x: 0.55, y: 1.48, label: 'PORT-PYLON-LH @ WS 204.25 / WBL -190.97', gold: true },
+        { x: 1.15, y: 0.85, label: 'PORT-ENG-AFT-STA5 (TRF Rear Mount)', gold: true }
+      ];
+      l1Ticks.forEach((tk) => {
+        const lbl = createCadLabelSprite(tk.label, tk.gold ? '#fbbf24' : '#38bdf8', 1.35);
+        lbl.position.set(tk.x, tk.y, 0);
+        group.add(lbl);
+      });
+    } else if (level === 2) {
+      // L2 CFM56 Engine Axial Stations & 5 Bearing Planes (CTC-044 p.30/32)
+      const engineStations = [
+        { mm: 0, label: 'Sta. 0 Intake (0mm)' },
+        { mm: 460, label: 'Brg #1/#2 Sump A (+460mm)', cyan: true },
+        { mm: 740, label: 'Sta. 12 Fan Frame (+740mm)', gold: true },
+        { mm: 860, label: 'Sta. 25 HPC Inlet (+860mm)' },
+        { mm: 1460, label: 'Sta. 3 Combustor (+1460mm)', gold: true },
+        { mm: 1820, label: 'Sta. 4 HPT Rotor (+1820mm)', gold: true },
+        { mm: 1955, label: 'Sta. 495 LPT Inlet (+1955mm)' },
+        { mm: 2290, label: 'Sta. 5 TRF & Sump B #4/#5 (+2290mm)', cyan: true }
+      ];
+
+      engineStations.forEach((st, idx) => {
+        const x = axialMmToX(st.mm);
+        group.add(
+          new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(x, -1.45, 0),
+              new THREE.Vector3(x, 1.45, 0)
+            ]),
+            materials.datumLineDim
+          )
+        );
+        const color = st.gold ? '#fbbf24' : st.cyan ? '#34d399' : '#38bdf8';
+        const lbl = createCadLabelSprite(st.label, color, 1.25);
+        lbl.position.set(x, idx % 2 === 0 ? -1.58 : 1.58, 0);
+        group.add(lbl);
+      });
+    } else if (level === 3) {
+      // L3 HPT & Combustor Micro-Assembly Datum Labels
+      const l3Labels = [
+        { x: -1.35, y: 2.05, label: 'Sta. 3 Annular Combustor & 20 Swirlers (R=355mm)', color: '#f59e0b' },
+        { x: -0.52, y: -1.95, label: 'Sta. 4 Stage-1 Cooled NGV Ring (42 Vanes)', color: '#38bdf8' },
+        { x: 0.0, y: 2.15, label: 'Ax.Sta +1820mm | 72 Rene N5 Fir-Tree Blades (R=415mm)', color: '#ef4444' },
+        { x: 0.0, y: -2.05, label: 'Rene 88DT PM Disk & Curvic Coupling Ø410mm', color: '#fbbf24' },
+        { x: 0.55, y: 1.85, label: 'HPT Active Clearance Control (ACC) Honeycomb Shroud', color: '#34d399' }
+      ];
+      l3Labels.forEach((item) => {
+        const lbl = createCadLabelSprite(item.label, item.color, 1.55);
+        lbl.position.set(item.x, item.y, 0);
+        group.add(lbl);
+      });
+    }
+  } else {
+    // Bridge Chainage & Elevation Datum Ruler
+    if (level === 0) {
+      const brgTicks = [
+        { ch: 165, el: 48, label: 'K0+165 West Gravity Anchorage', color: '#f59e0b' },
+        { ch: 500, el: 215, label: 'K0+500 West Pylon Saddle (EL +195.0m)', color: '#fbbf24' },
+        { ch: 1000, el: 112, label: 'K1+000 Midspan Box Girder (EL +65.0m, f/L=1:9.52)', color: '#38bdf8' },
+        { ch: 1500, el: 215, label: 'K1+500 East Pylon Saddle (EL +195.0m)', color: '#fbbf24' },
+        { ch: 1835, el: 48, label: 'K1+835 East Gravity Anchorage', color: '#f59e0b' }
+      ];
+      brgTicks.forEach((tk) => {
+        const wp = bridgeDatumToWorld(tk.ch, tk.el, 0);
+        const lbl = createCadLabelSprite(tk.label, tk.color, 1.55);
+        lbl.position.set(wp.x, wp.y, 0);
+        group.add(lbl);
+      });
+    } else {
+      const subLabels = [
+        { x: 0, y: 2.05, label: 'CL ±16.5m Cast-Steel Main Cable Band & Pin Hanger Socket', color: '#fbbf24' },
+        { x: 0, y: 0.95, label: 'EL +66.75m Orthotropic Deck Plate (16mm) + 8mm U-Ribs', color: '#38bdf8' },
+        { x: 0, y: -0.95, label: 'EL +63.25m Streamlined Box Girder Bottom Flange & 55° Wind Fairings', color: '#34d399' }
+      ];
+      subLabels.forEach((item) => {
+        const lbl = createCadLabelSprite(item.label, item.color, 1.65);
+        lbl.position.set(item.x, item.y, 0);
+        group.add(lbl);
+      });
+    }
+  }
+
+  return group;
+}
+
+
+// ============================================================================
+// MODULE: shell/digital-twin-workbench.js
+// ============================================================================
+/**
+ * Unified Industrial Digital Twin 3D Workbench Shell (L0 -> L1 -> L2 -> L3 Drill-Down Engine)
+ */
+
+
+
+
+
+
+
+
+/**
+ * Self-contained CAD Orbit / Pan / Dolly Controller (Zero external addon dependency)
+ */
+class CadOrbitControls {
+  constructor(camera, domElement) {
+    this.camera = camera;
+    this.domElement = domElement;
+    this.target = new THREE.Vector3(0, 0, 0);
+    this.spherical = new THREE.Spherical(6.0, Math.PI * 0.36, 0.55);
+    this.sphericalDelta = new THREE.Spherical(0, 0, 0);
+    this.panOffset = new THREE.Vector3();
+    this.dampingFactor = 0.12;
+    this.minDistance = 0.45;
+    this.maxDistance = 42.0;
+
+    let mode = null; // 'rotate' | 'pan'
+    let prev = { x: 0, y: 0 };
+
+    domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+    domElement.addEventListener('pointerdown', (e) => {
+      mode = e.button === 0 && !e.shiftKey ? 'rotate' : 'pan';
+      prev = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!mode) return;
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      prev = { x: e.clientX, y: e.clientY };
+
+      if (mode === 'rotate') {
+        this.sphericalDelta.theta -= dx * 0.0065;
+        this.sphericalDelta.phi -= dy * 0.0065;
+      } else if (mode === 'pan') {
+        const dist = this.camera.position.distanceTo(this.target);
+        const factor = dist * 0.0014;
+        const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 0).multiplyScalar(-dx * factor);
+        const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrix, 1).multiplyScalar(dy * factor);
+        this.panOffset.add(right).add(up);
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      mode = null;
+    });
+
+    domElement.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        const zoomScale = e.deltaY > 0 ? 1.09 : 0.91;
+        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius * zoomScale));
+      },
+      { passive: false }
+    );
+  }
+
+  syncFromCamera() {
+    const offset = this.camera.position.clone().sub(this.target);
+    this.spherical.setFromVector3(offset);
+  }
+
+  update() {
+    this.spherical.theta += this.sphericalDelta.theta * this.dampingFactor;
+    this.spherical.phi += this.sphericalDelta.phi * this.dampingFactor;
+    this.spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, this.spherical.phi));
+
+    this.sphericalDelta.theta *= 1 - this.dampingFactor;
+    this.sphericalDelta.phi *= 1 - this.dampingFactor;
+
+    this.target.addScaledVector(this.panOffset, this.dampingFactor);
+    this.panOffset.multiplyScalar(1 - this.dampingFactor);
+
+    const offset = new THREE.Vector3().setFromSpherical(this.spherical);
+    this.camera.position.copy(this.target).add(offset);
+    this.camera.lookAt(this.target);
+  }
+}
+function createEngineeringMaterials() {
+  return {
+    aeroSkin: new THREE.MeshPhysicalMaterial({
+      color: 0xdbeafe,
+      metalness: 0.45,
+      roughness: 0.25,
+      transparent: true,
+      opacity: 0.52,
+      side: THREE.DoubleSide
+    }),
+    structuralFrame: new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      metalness: 0.82,
+      roughness: 0.28,
+      side: THREE.DoubleSide
+    }),
+    titaniumGold: new THREE.MeshStandardMaterial({
+      color: 0xd97706,
+      metalness: 0.88,
+      roughness: 0.22,
+      side: THREE.DoubleSide
+    }),
+    chromeAlloy: new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      metalness: 0.92,
+      roughness: 0.16,
+      side: THREE.DoubleSide
+    }),
+    highTempAlloy: new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.85,
+      roughness: 0.3,
+      side: THREE.DoubleSide
+    }),
+    stringerCyan: new THREE.MeshStandardMaterial({
+      color: 0x0ea5e9,
+      metalness: 0.75,
+      roughness: 0.25,
+      side: THREE.DoubleSide
+    }),
+    n1ShaftCyan: new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      emissive: 0x083344,
+      emissiveIntensity: 0.6,
+      metalness: 0.85,
+      roughness: 0.2
+    }),
+    n2ShaftGold: new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      emissive: 0x451a03,
+      emissiveIntensity: 0.55,
+      metalness: 0.85,
+      roughness: 0.22
+    }),
+    combustorAmber: new THREE.MeshStandardMaterial({
+      color: 0xea580c,
+      emissive: 0x7c2d12,
+      emissiveIntensity: 0.65,
+      metalness: 0.72,
+      roughness: 0.32,
+      side: THREE.DoubleSide
+    }),
+    turbineCrimson: new THREE.MeshStandardMaterial({
+      color: 0xef4444,
+      emissive: 0x7f1d1d,
+      emissiveIntensity: 0.5,
+      metalness: 0.82,
+      roughness: 0.24,
+      side: THREE.DoubleSide
+    }),
+    agbEmerald: new THREE.MeshStandardMaterial({
+      color: 0x10b981,
+      emissive: 0x064e3b,
+      emissiveIntensity: 0.45,
+      metalness: 0.78,
+      roughness: 0.28
+    }),
+    cutawayCaseBlue: new THREE.MeshPhysicalMaterial({
+      color: 0x1e40af,
+      metalness: 0.65,
+      roughness: 0.28,
+      transparent: true,
+      opacity: 0.62,
+      side: THREE.DoubleSide
+    }),
+    nacellePreview: new THREE.MeshPhysicalMaterial({
+      color: 0x38bdf8,
+      metalness: 0.5,
+      roughness: 0.25,
+      transparent: true,
+      opacity: 0.46,
+      side: THREE.DoubleSide
+    }),
+    portHighlight: new THREE.MeshStandardMaterial({
+      color: 0xfbbf24,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.75,
+      metalness: 0.8,
+      roughness: 0.2
+    }),
+    portActiveGlow: new THREE.MeshStandardMaterial({
+      color: 0x34d399,
+      emissive: 0x059669,
+      emissiveIntensity: 1.1,
+      metalness: 0.6,
+      roughness: 0.15
+    }),
+    ghostWireframe: new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.18
+    }),
+    datumLineCyan: new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.78
+    }),
+    datumLineDim: new THREE.LineBasicMaterial({
+      color: 0x475569,
+      transparent: true,
+      opacity: 0.52
+    })
+  };
+}
+const LEVEL_METADATA = {
+  aircraft: [
+    {
+      level: 0,
+      code: 'L0',
+      shortTitle: 'L0 整机气动与 FS/BL/WL 主结构',
+      fullTitle: 'L0 波音 737-800 整机气动分割、FS/BL/WL 隔框翼梁与五大标准挂载端口舱',
+      datumSystem: 'Fuselage Station (STA 130–1217 in) | Buttock Line (BL ±680.4 in) | Water Line (WL 148.5–642.0 in) | Wing Station (WS 156.25–691.50)',
+      cameraPos: [3.2, 2.2, 5.4],
+      cameraTarget: [0, 0.1, 0],
+      summary: '基于 NTSB / Boeing 737-800 官方站位图（Figure 1–3）构建。拖动【正交拆解滑块】可剥离左右 Alclad 2024 气动蒙皮，显露内部 Section 41/43/44/46/47/48 纵向站位环框、WL 208.1 客舱地板梁、STA 540–663.75 中央翼盒及 WS 156.25–691.50 机翼前后梁与 22 道翼肋。点击左翼【PORT-PYLON-LH (WBL -190.97 / WS 204.25)】立即下钻进入 L1 吊架与短舱总成！'
+    },
+    {
+      level: 1,
+      code: 'L1',
+      shortTitle: 'L1 左翼吊架与动力短舱总成',
+      fullTitle: 'L1 左翼钛合金吊架扭矩盒、双推力拉杆、消音进气道、CFRP 风扇包皮与 C 型反推总成',
+      datumSystem: 'Parent Port: PORT-PYLON-LH (WBL -190.97 / WS 204.25 / STA 518.0) → Child Ports: PORT-ENG-FWD-STA12 & PORT-ENG-AFT-STA5',
+      cameraPos: [1.8, 1.4, 3.8],
+      cameraTarget: [0, 0.2, 0],
+      summary: '父级机翼前梁与 WS 204.25 主翼肋自动转化为半透明幽灵工程线框（Ghost Datum Context）。展示 ATA 54 钛合金吊架扭矩盒通过四组保险销连接机翼前梁，以及下方 ATA 71/78 进气唇口、左右铰接风扇包皮与 C 型叶栅反推力装置。点击【PORT-ENG-FWD-STA12】或【PORT-ENG-AFT-STA5】立即下钻进入 L2 CFM56 涡扇发动机核心拆解！'
+    },
+    {
+      level: 2,
+      code: 'L2',
+      shortTitle: 'L2 CFM56 涡扇六大核心模块',
+      fullTitle: 'L2 CFM56-7B27 涡扇发动机六大核心段、五主轴承滑油腔与 N1/N2 同心双转子轴系',
+      datumSystem: 'Engine Axial Stations: Sta. 0 (0mm) → Sta. 12 (+740mm) → Sta. 25 (+860mm) → Sta. 3 (+1460mm) → Sta. 4 (+1820mm) → Sta. 5 (+2290mm)',
+      cameraPos: [0.4, 1.35, 3.9],
+      cameraTarget: [0, 0, 0],
+      summary: '严格依据 CFMI 官方培训手册《CTC-044 Basic Engine》第 24、30、32、34 页构建：完整呈现 M1（24片宽弦钛风扇+3级增压级+风扇框架+1#/2#轴承）、M2（9级高压压气机+VSV+3#轴承）、M3（短环形燃烧室+20支燃油喷嘴）、M4（单级高压涡轮+ACC主动间隙控制）、M5（4级低压涡轮+涡轮后框架TRF+4#/5#轴承）及 M6（6点钟径向传动轴+AGB附件齿轮箱）。点击【M4 高压涡轮】或【PORT-HPT-ROTOR-SPLINE】下钻进入 L3！'
+    },
+    {
+      level: 3,
+      code: 'L3',
+      shortTitle: 'L3 高压涡轮枞树榫叶片与燃烧室',
+      fullTitle: 'L3 高压涡轮粉末冶金盘、72片单晶气冷枞树形榫头叶片、1级导向器与环形燃烧室旋流器',
+      datumSystem: 'Parent Port: PORT-HPT-ROTOR-SPLINE (Ax.Sta +1820mm / Curvic Ø410mm) | Blade Pitch Circle R=415mm | 20 Swirlers @ R=355mm',
+      cameraPos: [0.6, 1.25, 3.3],
+      cameraTarget: [-0.35, 0.1, 0],
+      summary: '依据 Rolls-Royce《The Jet Engine》涡轮与燃烧室章节精密切割：展示 Rene 88DT 涡轮盘外缘拉削的三齿枞树形榫槽（3-Tang Fir-Tree Slots）、Rene N5 单晶叶片内部蛇形冷却通道与前缘气膜孔（拖动拆解滑块可将顶部扇区 12 片单晶叶片从榫槽中径向抽出！）、Stage-1 冲击冷却静叶环（NGV）以及 20 支双锥燃油旋流喷嘴。'
+    }
+  ],
+  bridge: [
+    {
+      level: 0,
+      code: 'L0',
+      shortTitle: 'L0 悬索大桥全桥索塔-主缆-锚碇体系',
+      fullTitle: 'L0 现代大跨径钢箱梁悬索大桥：双门式主塔、PPWS 平行钢丝主缆、重力式锚碇与加劲钢箱梁',
+      datumSystem: 'Chainage (K0+165 → K1+835) | Elevation (EL -15.0m → EL +195.0m) | Transverse Offset (CL ±16.5m) | Sag Ratio f/L = 1:9.52',
+      cameraPos: [0, 3.2, 13.5],
+      cameraTarget: [0, 0.4, 0],
+      summary: '依据陈惠发（Wai-Fah Chen）《Bridge Engineering Handbook》第 18 章悬索桥规范构建，验证本数字孪生底座与 MountingPort 标准接口的跨行业通用性。支持点击塔顶主索鞍端口【PORT-BRG-SADDLE-NW】或跨中正交异性钢箱梁端口【PORT-BRG-DECK-MID】下钻查看内部构造！'
+    },
+    {
+      level: 1,
+      code: 'L1',
+      shortTitle: 'L1/L2 正交异性钢箱梁与主缆索夹拆解',
+      fullTitle: 'L1/L2 流线型正交异性扁平闭口钢箱梁（U形加劲肋+横隔板+抗风嘴）与铸钢主缆索夹销接节点',
+      datumSystem: 'K1+000 Midspan Segment | EL +63.25m → EL +66.75m | CL ±16.5m | 16mm Orthotropic Deck + 8mm U-Ribs @ 600mm Pitch',
+      cameraPos: [2.6, 1.8, 3.6],
+      cameraTarget: [0, 0.2, 0],
+      summary: '展示悬索桥跨中标准梁段的正交拆解：上方铸钢对开式主缆索夹与高强螺杆、中层 16mm 正交异性桥面板及底面焊接的梯形闭口 U 肋、内部 3.2m 间距实腹式横隔板、以及两侧 55° 流线型三角形抗风嘴。'
+    }
+  ]
+};
+function initDigitalTwinWorkbench() {
+  const canvasContainer = document.getElementById('viewport-canvas-wrap');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060b14);
+  scene.fog = new THREE.FogExp2(0x060b14, 0.028);
+
+  const camera = new THREE.PerspectiveCamera(42, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.05, 200);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.18;
+  canvasContainer.appendChild(renderer.domElement);
+
+  const controls = new CadOrbitControls(camera, renderer.domElement);
+
+  // Studio CAD Lighting Rig
+  scene.add(new THREE.AmbientLight(0xdbeafe, 0.78));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+  keyLight.position.set(8, 14, 10);
+  scene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.35);
+  rimLight.position.set(-10, 6, -8);
+  scene.add(rimLight);
+
+  const bottomFill = new THREE.DirectionalLight(0xf59e0b, 0.75);
+  bottomFill.position.set(0, -10, 4);
+  scene.add(bottomFill);
+
+  // Engineering Floor Grid
+  const cadGrid = new THREE.GridHelper(28, 56, 0x1e3a8a, 0x0f172a);
+  cadGrid.position.y = -2.25;
+  scene.add(cadGrid);
+
+  const materials = createEngineeringMaterials();
+
+  // Application State
+  const state = {
+    domain: 'aircraft', // 'aircraft' | 'bridge'
+    level: 0,           // 0 | 1 | 2 | 3
+    explodeFactor: 0.0, // 0.0 .. 1.0
+    showCadRuler: true,
+    showGhostContext: true,
+    rotorRpmFactor: 0.35,
+    activeBuild: null,
+    datumRulerGroup: null,
+    selectedTarget: null,
+    cameraTween: null
+  };
+
+  const activeStageGroup = new THREE.Group();
+  scene.add(activeStageGroup);
+
+  function smoothFlyCamera(targetPosArr, lookAtArr) {
+    state.cameraTween = {
+      startPos: camera.position.clone(),
+      endPos: new THREE.Vector3(...targetPosArr),
+      startTarget: controls.target.clone(),
+      endTarget: new THREE.Vector3(...lookAtArr),
+      progress: 0
+    };
+  }
+
+  function applyExplodeFactor(factor) {
+    state.explodeFactor = factor;
+    const sliderEl = document.getElementById('explode-slider');
+    const valEl = document.getElementById('explode-value');
+    if (sliderEl) sliderEl.value = String(Math.round(factor * 100));
+    if (valEl) valEl.textContent = `${Math.round(factor * 100)}%`;
+
+    if (!state.activeBuild || !state.activeBuild.explodableParts) return;
+    state.activeBuild.explodableParts.forEach((part) => {
+      const base = part.userData.basePos || new THREE.Vector3();
+      const vec = part.userData.explodeVec || new THREE.Vector3();
+      part.position.set(
+        base.x + vec.x * factor,
+        base.y + vec.y * factor,
+        base.z + vec.z * factor
+      );
+    });
+  }
+
+  function loadTwinLevel(domain, level, initialExplode = null) {
+    state.domain = domain;
+    const maxLevel = LEVEL_METADATA[domain].length - 1;
+    state.level = Math.max(0, Math.min(level, maxLevel));
+
+    while (activeStageGroup.children.length > 0) {
+      activeStageGroup.remove(activeStageGroup.children[0]);
+    }
+
+    let buildResult = null;
+    if (domain === 'aircraft') {
+      if (state.level === 0) buildResult = buildL0AircraftAirframe(materials);
+      else if (state.level === 1) buildResult = buildL1PylonNacelle(materials);
+      else if (state.level === 2) buildResult = buildL2Cfm56Turbofan(materials);
+      else buildResult = buildL3HptCombustorCore(materials);
+    } else {
+      buildResult = buildSuspensionBridgeTwin(materials, state.level);
+    }
+
+    state.activeBuild = buildResult;
+    activeStageGroup.add(buildResult.root);
+
+    // Build CAD Station Datum Ruler Overlay
+    state.datumRulerGroup = buildCadDatumRuler(domain, state.level, materials);
+    state.datumRulerGroup.visible = state.showCadRuler;
+    activeStageGroup.add(state.datumRulerGroup);
+
+    const meta = LEVEL_METADATA[domain][state.level];
+    smoothFlyCamera(meta.cameraPos, meta.cameraTarget);
+
+    const defaultExplode = initialExplode !== null ? initialExplode : state.level === 0 ? 0.15 : 0.28;
+    applyExplodeFactor(defaultExplode);
+
+    renderBreadcrumbs();
+    renderHierarchySidebar();
+    if (buildResult.interactiveTargets.length > 0) {
+      selectPart(buildResult.interactiveTargets[0]);
+    }
+  }
+
+  function selectPart(obj3d) {
+    state.selectedTarget = obj3d;
+    const ud = obj3d.userData || {};
+
+    document.querySelectorAll('.tree-node-item').forEach((el) => {
+      el.classList.toggle('active', el.dataset.partId === ud.partId);
+    });
+
+    const titleEl = document.getElementById('inspector-part-title');
+    const datumEl = document.getElementById('inspector-part-datum');
+    const matEl = document.getElementById('inspector-part-material');
+    const descEl = document.getElementById('inspector-part-desc');
+    const drillBtn = document.getElementById('inspector-drill-btn');
+
+    if (titleEl) titleEl.textContent = ud.title || ud.partId || '未命名工业组件';
+    if (datumEl) datumEl.textContent = ud.datum || 'STA / BL / WL Industrial Datum';
+    if (matEl) matEl.textContent = ud.material || 'Aerospace Standard Alloy';
+    if (descEl) descEl.textContent = ud.description || '';
+
+    if (drillBtn) {
+      if (typeof ud.drillDownLevel === 'number') {
+        drillBtn.style.display = 'inline-flex';
+        drillBtn.textContent = `⚡ 下钻进入 L${ud.drillDownLevel} 子系统内部结构 (Drill-Down)`;
+        drillBtn.onclick = () => loadTwinLevel(state.domain, ud.drillDownLevel, 0.35);
+      } else {
+        drillBtn.style.display = 'none';
+      }
+    }
+  }
+
+  function renderBreadcrumbs() {
+    const bar = document.getElementById('breadcrumb-trail');
+    const metaList = LEVEL_METADATA[state.domain];
+    const currentMeta = metaList[state.level];
+
+    document.getElementById('active-level-banner-title').textContent = currentMeta.fullTitle;
+    document.getElementById('active-level-datum-spec').textContent = currentMeta.datumSystem;
+    document.getElementById('active-level-summary').textContent = currentMeta.summary;
+
+    document.querySelectorAll('.domain-switch-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.domain === state.domain);
+    });
+
+    bar.innerHTML = '';
+    metaList.forEach((m, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `crumb-step ${idx === state.level ? 'active' : idx < state.level ? 'visited' : ''}`;
+      btn.innerHTML = `<span class="crumb-badge">${m.code}</span><span>${m.shortTitle.replace(/^L\d\S*\s*/, '')}</span>`;
+      btn.onclick = () => loadTwinLevel(state.domain, idx);
+      bar.appendChild(btn);
+
+      if (idx < metaList.length - 1) {
+        const sep = document.createElement('span');
+        sep.className = 'crumb-sep';
+        sep.textContent = '▸';
+        bar.appendChild(sep);
+      }
+    });
+  }
+
+  function renderHierarchySidebar() {
+    const listEl = document.getElementById('scene-graph-list');
+    const portsEl = document.getElementById('mounting-port-list');
+    if (!listEl || !portsEl || !state.activeBuild) return;
+
+    listEl.innerHTML = '';
+    portsEl.innerHTML = '';
+
+    state.activeBuild.interactiveTargets.forEach((target) => {
+      const ud = target.userData || {};
+      const item = document.createElement('div');
+      item.className = `tree-node-item ${ud.isMountingPort ? 'port-node' : ''}`;
+      item.dataset.partId = ud.partId || '';
+
+      const drillBadge = typeof ud.drillDownLevel === 'number'
+        ? `<span class="drill-tag" data-drill="${ud.drillDownLevel}">可下钻 L${ud.drillDownLevel} ▸</span>`
+        : '';
+
+      item.innerHTML = `
+        <div class="node-head">
+          <span class="node-title">${ud.title || ud.partId}</span>
+          ${drillBadge}
+        </div>
+        <div class="node-datum">${ud.datum || ''}</div>
+      `;
+
+      item.onclick = (e) => {
+        const drillAttr = e.target.getAttribute && e.target.getAttribute('data-drill');
+        if (drillAttr !== null && drillAttr !== undefined && drillAttr !== '') {
+          e.stopPropagation();
+          loadTwinLevel(state.domain, Number(drillAttr), 0.35);
+          return;
+        }
+        selectPart(target);
+      };
+
+      if (ud.isMountingPort) {
+        portsEl.appendChild(item);
+      } else {
+        listEl.appendChild(item);
+      }
+    });
+
+    if (portsEl.children.length === 0) {
+      portsEl.innerHTML = `<div class="empty-port-note">当前已处于 L3 微观零件末端级（72片枞树形榫槽气冷单晶叶片级），可通过顶部面包屑返回上级挂载接口。</div>`;
+    }
+  }
+
+  // Raycaster Click Selection & Double-Click Drill-Down on 3D Viewport
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let downPos = { x: 0, y: 0 };
+
+  renderer.domElement.addEventListener('pointerdown', (e) => {
+    downPos = { x: e.clientX, y: e.clientY };
+  });
+
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(pointer, camera);
+    if (!state.activeBuild) return;
+    const hits = raycaster.intersectObjects(state.activeBuild.interactiveTargets, true);
+    if (hits.length > 0) {
+      let curr = hits[0].object;
+      while (curr && !state.activeBuild.interactiveTargets.includes(curr)) {
+        curr = curr.parent;
+      }
+      if (curr) {
+        selectPart(curr);
+      }
+    }
+  });
+
+  renderer.domElement.addEventListener('dblclick', () => {
+    if (state.selectedTarget && typeof state.selectedTarget.userData.drillDownLevel === 'number') {
+      loadTwinLevel(state.domain, state.selectedTarget.userData.drillDownLevel, 0.35);
+    }
+  });
+
+  // UI Control Bindings
+  document.getElementById('explode-slider').addEventListener('input', (e) => {
+    applyExplodeFactor(Number(e.target.value) / 100);
+  });
+
+  document.getElementById('btn-toggle-explode').addEventListener('click', () => {
+    const next = state.explodeFactor > 0.4 ? 0.0 : 0.85;
+    applyExplodeFactor(next);
+  });
+
+  document.getElementById('btn-toggle-ruler').addEventListener('click', (e) => {
+    state.showCadRuler = !state.showCadRuler;
+    if (state.datumRulerGroup) state.datumRulerGroup.visible = state.showCadRuler;
+    e.currentTarget.classList.toggle('active', state.showCadRuler);
+  });
+
+  document.getElementById('btn-toggle-ghost').addEventListener('click', (e) => {
+    state.showGhostContext = !state.showGhostContext;
+    materials.ghostWireframe.opacity = state.showGhostContext ? 0.18 : 0.0;
+    e.currentTarget.classList.toggle('active', state.showGhostContext);
+  });
+
+  document.querySelectorAll('.domain-switch-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      loadTwinLevel(btn.dataset.domain, 0, 0.18);
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+  });
+
+  // Animation Loop (Counter-Rotating N1 LP Spool & N2 HP Spool + Camera Tween)
+  const clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+
+    if (state.cameraTween) {
+      state.cameraTween.progress += dt * 2.2;
+      const t = Math.min(1, state.cameraTween.progress);
+      const ease = 1 - Math.pow(1 - t, 3);
+      camera.position.lerpVectors(state.cameraTween.startPos, state.cameraTween.endPos, ease);
+      controls.target.lerpVectors(state.cameraTween.startTarget, state.cameraTween.endTarget, ease);
+      controls.syncFromCamera();
+      if (t >= 1) state.cameraTween = null;
+    }
+
+    if (state.activeBuild && state.activeBuild.animatedRotors) {
+      const { n1Parts = [], n2Parts = [] } = state.activeBuild.animatedRotors;
+      n1Parts.forEach((r) => {
+        r.rotation.x += dt * 1.6 * state.rotorRpmFactor;
+      });
+      n2Parts.forEach((r) => {
+        r.rotation.x -= dt * 3.8 * state.rotorRpmFactor; // N2 runs faster & counter-rotates for visual distinction
+      });
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // Initialize at L0 Boeing 737-800 Airframe
+  loadTwinLevel('aircraft', 0, 0.18);
+  animate();
+}
+
+
+// Boot Workbench
+window.addEventListener('DOMContentLoaded', () => {
+  initDigitalTwinWorkbench();
+});
+
+  </script>
+</body>
+</html>

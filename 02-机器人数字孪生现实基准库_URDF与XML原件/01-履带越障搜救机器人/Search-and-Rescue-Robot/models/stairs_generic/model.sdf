@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="stairs_generic">
+    <static>true</static>
+    <!-- Step 1 -->
+    <link name="step_1">
+      <pose>0.15 0 0.05 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.2 0.2 1</ambient>
+            <diffuse>0.6 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+    <!-- Step 2 -->
+    <link name="step_2">
+      <pose>0.45 0 0.15 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.2 0.2 1</ambient>
+            <diffuse>0.6 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+    <!-- Step 3 -->
+    <link name="step_3">
+      <pose>0.75 0 0.25 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.2 0.2 1</ambient>
+            <diffuse>0.6 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+    <!-- Step 4 -->
+    <link name="step_4">
+      <pose>1.05 0 0.35 0 0 0</pose>
+      <collision name="collision">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <box>
+            <size>0.3 1.0 0.1</size>
+          </box>
+        </geometry>
+        <material>
+            <ambient>0.6 0.2 0.2 1</ambient>
+            <diffuse>0.6 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

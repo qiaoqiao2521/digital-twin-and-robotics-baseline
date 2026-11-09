@@ -1,0 +1,7 @@
+links:
+  quick_connect_interface_link:
+    action: bounding_box
+    padding:
+      - 0.0
+      - 0.002
+      - 0.002

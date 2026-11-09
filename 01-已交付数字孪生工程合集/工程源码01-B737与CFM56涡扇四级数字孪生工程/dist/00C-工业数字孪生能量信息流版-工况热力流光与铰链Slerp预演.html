@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>高涵道比双转子涡扇发动机 · 能量与信息流 3D 数字孪生系统 (工况热力流光 + 铰链Slerp + 残影预演)</title>
+  <style>
+    :root {
+      --bg-deep: #040811;
+      --glass-bg: rgba(8, 15, 29, 0.74);
+      --glass-border: rgba(56, 189, 248, 0.26);
+      --accent-cyan: #38bdf8;
+      --accent-amber: #f59e0b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-deep);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+    }
+
+    #viewport-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+    }
+
+    /* Progressive Disclosure 3D Projected Layer */
+    #progressive-hud-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .prog-beacon {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 11px 4px 8px;
+      background: rgba(4, 9, 20, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 999px;
+      font-size: 11.5px;
+      color: #e2e8f0;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .prog-beacon.visible {
+      opacity: 0.92;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .beacon-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse-dot 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(0.9); opacity: 0.85; }
+      50% { transform: scale(1.35); opacity: 1; }
+    }
+
+    .prog-gaspill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 5px 11px;
+      background: rgba(6, 12, 24, 0.82);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 10px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      backdrop-filter: blur(10px);
+      transform: translate(-50%, -100%);
+    }
+
+    .prog-gaspill.visible {
+      opacity: 0.94;
+    }
+
+    .gp-title {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 1px;
+    }
+
+    .gp-metric {
+      font-size: 11px;
+      color: #cbd5e1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Control #1: Top-Left Minimal Translucent Breadcrumb Bar */
+    #top-breadcrumb {
+      position: fixed;
+      top: 22px;
+      left: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .crumb-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.2px;
+    }
+
+    .crumb-btn:hover {
+      color: var(--text-main);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .crumb-btn.active {
+      color: #030712;
+      background: var(--accent-cyan);
+      font-weight: 600;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+    }
+
+    .crumb-sep {
+      color: rgba(148, 163, 184, 0.45);
+      font-size: 12px;
+    }
+
+    /* Control #2: Bottom-Center Frosted Control Dock (Throttle + Explode Slerp + Flow + Clip) */
+    #bottom-dock {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 22px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.58);
+    }
+
+    .dock-group {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .dock-label {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .dock-val {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-cyan);
+      min-width: 42px;
+      text-align: right;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .dock-val.thermal {
+      color: var(--accent-amber);
+      min-width: 72px;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(148, 163, 184, 0.22);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 118px;
+      height: 5px;
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 999px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+      cursor: pointer;
+    }
+
+    #throttle-slider::-webkit-slider-thumb {
+      background: var(--accent-amber);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.9);
+    }
+
+    .dock-toggle-btn {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: var(--text-main);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 6px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .dock-toggle-btn:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .dock-toggle-btn.active {
+      background: rgba(245, 158, 11, 0.2);
+      border-color: var(--accent-amber);
+      color: #fde68a;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+    }
+
+    #clip-subcontrols {
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #clip-subcontrols.visible {
+      display: flex;
+    }
+
+    .axis-mini-btn {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-cyan);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* Control #3A: Single-Line Cursor Hover Pill (with Hinge Slerp & Ghost Stroke Readout) */
+    #hover-pill {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0;
+      padding: 6px 13px;
+      background: rgba(4, 9, 20, 0.88);
+      border: 1px solid rgba(56, 189, 248, 0.48);
+      border-radius: 999px;
+      font-size: 12.5px;
+      color: var(--text-main);
+      white-space: nowrap;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+      transition: opacity 0.12s ease;
+    }
+
+    #hover-pill.visible {
+      opacity: 1;
+    }
+
+    .pill-tag {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    /* Control #3B: Compact 3-Line Single-Click Focus Micro-Card */
+    #focus-card {
+      position: fixed;
+      bottom: 88px;
+      right: 28px;
+      z-index: 15;
+      width: 356px;
+      padding: 14px 18px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #focus-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .focus-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    #focus-badge {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+
+    #focus-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 15px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #focus-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #focus-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
+    #focus-drill-btn {
+      width: 100%;
+      padding: 6px 12px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.22), rgba(245, 158, 11, 0.22));
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    #focus-drill-btn:hover {
+      background: rgba(56, 189, 248, 0.32);
+      border-color: var(--accent-cyan);
+    }
+
+    /* Streaming GLB Boot Overlay */
+    #boot-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: radial-gradient(circle at center, #0a1326 0%, #040811 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: opacity 0.35s ease;
+    }
+
+    #boot-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .boot-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      color: var(--text-main);
+    }
+
+    #boot-status {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .boot-bar-track {
+      width: 280px;
+      height: 4px;
+      background: rgba(148, 163, 184, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    #boot-bar-fill {
+      width: 5%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-amber));
+      transition: width 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport-container"></div>
+  <div id="progressive-hud-layer"></div>
+
+  <!-- Control #1: Top-Left Minimal Translucent Breadcrumb Bar -->
+  <nav id="top-breadcrumb" aria-label="Hierarchy Breadcrumb">
+    <button class="crumb-btn active" data-level="0">L0 整机信息流骨架</button>
+    <span class="crumb-sep">›</span>
+    <button class="crumb-btn" data-level="1">L1 吊架与鸥翼机匣(Slerp)</button>
+    <span class="crumb-sep">›</span>
+    <button class="crumb-btn" data-level="2">L2 双转子气动流道</button>
+    <span class="crumb-sep">›</span>
+    <button class="crumb-btn" data-level="3">L3 燃烧室黑体辐射热端</button>
+  </nav>
+
+  <!-- Control #2: Bottom-Center Frosted Glass Control Bar -->
+  <div id="bottom-dock">
+    <div class="dock-group" title="虚拟工况发生器：联动 N1/N2 转速比、黑体辐射温度场 Shader 与三维气动流道粒子流速">
+      <span class="dock-label">工况推力</span>
+      <input id="throttle-slider" type="range" min="0" max="100" value="65" />
+      <span id="throttle-value" class="dock-val thermal">65% 巡航</span>
+    </div>
+
+    <div class="dock-divider"></div>
+
+    <div class="dock-group" title="位置 Lerp + 机匣铰链四元数 Slerp 鸥翼掀起（悬停可触发半透明残影预演）">
+      <span class="dock-label">爆炸/掀开</span>
+      <input id="explode-slider" type="range" min="0" max="100" value="0" />
+      <span id="explode-value" class="dock-val">0%</span>
+    </div>
+
+    <div class="dock-divider"></div>
+
+    <div class="dock-group">
+      <button id="flow-toggle-btn" class="dock-toggle-btn active">气动与信息脉冲流</button>
+      <button id="clip-toggle-btn" class="dock-toggle-btn">激光剖切面</button>
+      <div id="clip-subcontrols">
+        <button id="clip-axis-btn" class="axis-mini-btn" title="切换剖切轴">纵剖 (Z)</button>
+        <input id="clip-slider" type="range" min="-85" max="85" value="15" style="width: 88px;" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Control #3A: Single-Line Cursor Hover Pill -->
+  <div id="hover-pill"></div>
+
+  <!-- Control #3B: Compact 3-Line Single-Click Focus Micro-Card -->
+  <div id="focus-card">
+    <div class="focus-header">
+      <span id="focus-badge">L3 · 高温热端核心系</span>
+      <button id="focus-close-btn" title="退出零件独显">✕</button>
+    </div>
+    <div id="focus-title">多孔气膜冷却短环形燃烧室火焰筒</div>
+    <div id="focus-desc">承受 1700K 燃气 · 气膜冷却孔 | 实时工况加载中...</div>
+    <button id="focus-drill-btn">推轨下钻此子系统层级 (或双击零件) ▸</button>
+  </div>
+
+  <!-- Streaming GLB Boot Loader -->
+  <div id="boot-loader">
+    <div class="boot-title">纯数字孪生能量信息流引擎 · 高模流式加载中</div>
+    <div id="boot-status">正在初始化黑体辐射 Shader 与三维气动流线管网...</div>
+    <div class="boot-bar-track">
+      <div id="boot-bar-fill"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const p = window.location.pathname;
+      if (p.includes('/api/material-index/file/') && !p.endsWith('/') && !p.endsWith('.html')) {
+        const base = document.createElement('base');
+        base.href = p + '/';
+        document.head.appendChild(base);
+      }
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = './src/main-flow.js';
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>

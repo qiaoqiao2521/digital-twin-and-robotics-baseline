@@ -1,0 +1,1022 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="sar_final_v4">
+  
+
+
+  <!-- Base Footprint (Dummy Root Link) -->
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_to_base_link" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Base Link -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.00126420257028019 -0.251057618031808 0.0718333687119005" rpy="0 0 0" />
+      <mass value="8.46984378757734" />
+      <inertia
+        ixx="0.0381083743020431" ixy="-4.53894238496074E-08" ixz="5.86287459822798E-08"
+        iyy="0.0129607690471721" iyz="1.42026965119255E-07"
+        izz="0.0455191282656682" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/base_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Front Left Wheel -->
+  <link name="front_left">
+    <inertial>
+      <origin xyz="0.0810984557278278 1.97689087322317E-14 -6.87783163755284E-14" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.32742281276343E-16" ixz="5.80059271090662E-17"
+        iyy="0.00222224748961163" iyz="2.57498015965307E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/front_left.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_front_left" type="continuous">
+    <origin xyz="0.163863449342288 -0.442000000000059 0.0400000000000012" rpy="1.59848438591769 0 0" />
+    <parent link="base_link" />
+    <child link="front_left" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+  <!-- Front Right Wheel -->
+  <link name="front_right">
+    <inertial>
+      <origin xyz="0.0810984557278285 2.26207941267376E-14 -9.6034291630076E-15" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.31209347412729E-16" ixz="6.54163998151731E-17"
+        iyy="0.00222224748961163" iyz="2.24971950790742E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/front_right.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_front_right" type="continuous">
+    <origin xyz="-0.163863449342288 -0.431999999999999 0.0400000000000042" rpy="1.72583753342346 0 -3.14159265358979" />
+    <parent link="base_link" />
+    <child link="front_right" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+
+  <!-- Middle Right Wheel -->
+  <link name="middle_right">
+    <inertial>
+      <origin xyz="0.0810984557278285 2.26207941267376E-14 -9.6034291630076E-15" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.31209347412729E-16" ixz="6.54163998151731E-17"
+        iyy="0.00222224748961163" iyz="2.24971950790742E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/front_right.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_middle_right" type="continuous">
+    <origin xyz="-0.163863449342288 -0.22 0.0400000000000042" rpy="1.72583753342346 0 -3.14159265358979" />
+    <parent link="base_link" />
+    <child link="middle_right" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+  <!-- Back Right Wheel -->
+  <link name="back_right">
+    <inertial>
+      <origin xyz="0.0810984557278267 2.27040608535845E-14 -9.7161861889461E-15" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.32425647242009E-16" ixz="5.70462861080181E-17"
+        iyy="0.00222224748961163" iyz="2.01932654625425E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/back_right.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_back_right" type="continuous">
+    <origin xyz="-0.163863449342287 -0.00800000000000208 0.0400000000000008" rpy="1.62760042436194 0 -3.14159265358979" />
+    <parent link="base_link" />
+    <child link="back_right" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+  <!-- Back Left Wheel -->
+  <link name="back_left">
+    <inertial>
+      <origin xyz="0.0810984557278278 2.23362994766774E-14 -9.88618908959182E-15" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.38158134336389E-16" ixz="5.70115613258215E-17"
+        iyy="0.00222224748961163" iyz="2.38016258178458E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/back_left.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_back_left" type="continuous">
+    <origin xyz="0.16386344934229 -0.00799999999999914 0.0399999999999986" rpy="1.55873515363807 0 0" />
+    <parent link="base_link" />
+    <child link="back_left" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+
+  <!-- Middle Left Wheel -->
+  <link name="middle_left">
+    <inertial>
+      <origin xyz="0.0810984557278278 1.97689087322317E-14 -6.87783163755284E-14" rpy="0 0 0" />
+      <mass value="1.68196718753164" />
+      <inertia
+        ixx="0.00399341448166846" ixy="-1.32742281276343E-16" ixz="5.80059271090662E-17"
+        iyy="0.00222224748961163" iyz="2.57498015965307E-18"
+        izz="0.00222224748961162" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/front_left.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.796078431372549 0.823529411764706 0.937254901960784 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.05 0 0" rpy="0 1.57079632679 0" />
+      <geometry>
+        <cylinder radius="0.091" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_middle_left" type="continuous">
+    <origin xyz="0.163863449342288 -0.225 0.0400000000000012" rpy="1.59848438591769 0 0" />
+    <parent link="base_link" />
+    <child link="middle_left" />
+    <axis xyz="-1 0 0" />
+    <limit effort="5000.0" velocity="100.0" />
+    <dynamics damping="0.1" friction="0.0"/>
+  </joint>
+
+  <!-- Flipper Front Left -->
+  <link name="f_front_left">
+    <inertial>
+      <origin xyz="0.031622 -0.0032381 0.13083" rpy="0 0 0" />
+      <mass value="3.4989" />
+      <inertia
+        ixx="0.016916" ixy="-1.9202E-14" ixz="6.1693E-13"
+        iyy="0.014727" iyz="0.00030144"
+        izz="0.0025548" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_front_left.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.64706 0.61961 0.58824 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_front_left.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_f_front_left" type="continuous">
+    <origin xyz="0.265863449342289 -0.442000000000059 0.0400000000000012" rpy="1.5707963267949 0 0" />
+    <parent link="base_link" />
+    <child link="f_front_left" />
+    <axis xyz="1 0 0" />
+    <dynamics damping="10.0" friction="1.0"/>
+  </joint>
+
+  <!-- Flipper Front Right -->
+  <link name="f_front_right">
+    <inertial>
+      <origin xyz="0.031621629173038 -0.123826274839039 0.0423576344505114" rpy="0 0 0" />
+      <mass value="3.49891238350807" />
+      <inertia
+        ixx="0.0169163346791242" ixy="-5.85205794363469E-13" ixz="1.96025887449061E-13"
+        iyy="0.00382399825160741" iyz="0.00373211521267891"
+        izz="0.0134576201463982" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_front_right.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.647058823529412 0.619607843137255 0.588235294117647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_front_right.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_f_front_right" type="continuous">
+    <origin xyz="-0.265863449342288 -0.432 0.0400000000000015" rpy="-2.83238204266232 0 3.14159265358979" />
+    <parent link="base_link" />
+    <child link="f_front_right" />
+    <axis xyz="1 0 0" />
+    <dynamics damping="10.0" friction="1.0"/>
+  </joint>
+
+  <!-- Flipper Back Right -->
+  <link name="f_back_right">
+    <inertial>
+      <origin xyz="0.0316216291730378 0.12593763859091 -0.0355925093650596" rpy="0 0 0" />
+      <mass value="3.49891238350807" />
+      <inertia
+        ixx="0.0169163346791243" ixy="5.94989030742522E-13" ixz="-1.64069902672423E-13"
+        iyy="0.00344876327216715" iyz="0.0031895157559239"
+        izz="0.0138328551258386" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_back_right.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.647058823529412 0.619607843137255 0.588235294117647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_back_right.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_f_back_right" type="continuous">
+    <origin xyz="-0.265863449342287 -0.00800000000000151 0.0400000000000017" rpy="-2.79819703039915 0 3.14159265358979" />
+    <parent link="base_link" />
+    <child link="f_back_right" />
+    <axis xyz="1 0 0" />
+    <dynamics damping="10.0" friction="1.0"/>
+  </joint>
+
+  <!-- Flipper Back Left -->
+  <link name="f_back_left">
+    <inertial>
+      <origin xyz="0.031622 -0.0074666 -0.13066" rpy="0 0 0" />
+      <mass value="3.4989" />
+      <inertia
+        ixx="0.016916" ixy="-3.1295E-14" ixz="-6.1642E-13"
+        iyy="0.014695" iyz="-0.00069417"
+        izz="0.002587" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_back_left.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.64706 0.61961 0.58824 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/f_back_left.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_f_back_left" type="continuous">
+    <origin xyz="0.26586344934229 -0.00799999999999934 0.0399999999999985" rpy="1.5707963267949 0 0" />
+    <parent link="base_link" />
+    <child link="f_back_left" />
+    <axis xyz="1 0 0" />
+    <dynamics damping="10.0" friction="1.0"/>
+  </joint>
+
+  <!-- Lidar -->
+  <link name="lidar">
+    <inertial>
+      <origin xyz="0.0399727358320455 -2.60923412781247E-08 -0.0453602264637096" rpy="0 0 0" />
+      <mass value="1.06188283406011" />
+      <inertia
+        ixx="0.000358373165459628" ixy="-3.15103920233493E-10" ixz="1.23550242403843E-06"
+        iyy="0.000349871999765887" iyz="-2.76002836368468E-10"
+        izz="0.000505647271843677" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/lidar.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.650980392156863 0.619607843137255 0.588235294117647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="model://sar_urdf/meshes/lidar.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_lidar" type="fixed">
+    <origin xyz="0 -0.438 0.209" rpy="0 0 -1.5707963267949" />
+    <parent link="base_link" />
+    <child link="lidar" />
+    <axis xyz="0 0 0" />
+  </joint>
+
+  <gazebo reference="lidar">
+    <sensor name="lidar_sensor" type="gpu_lidar">
+      <always_on>1</always_on>
+      <update_rate>10</update_rate>
+      <visualize>true</visualize>
+      <topic>scan</topic>
+      <frame_id>lidar</frame_id>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>1</samples>
+            <resolution>0.01</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>10.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+    </sensor>
+  </gazebo>
+
+
+
+
+  <!-- AR4 6-DOF Arm -->
+  <material name="black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.020 0.032 0.171 1.0"/>
+  </material>
+  <material name="white">
+    <color rgba="0.631 0.665 0.831 1.0"/>
+  </material>
+  <material name="grey">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <!-- params -->
+  <!-- - m [float] link mass; -->
+  <!-- - x [float] link dimension on the X-axis; -->
+  <!-- - y [float] link dimension on the Y-axis; -->
+  <!-- - z [float] link dimension on the Z-axis; -->
+  <!-- - o_xyz [string] position offset -->
+  <!-- - o_rpy [string] rotation offset -->
+  <link name="ar4_base_link">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.7102"/>
+      <inertia ixx="0.0007397916666666669" ixy="0.0" ixz="0.0" iyy="0.0035569183333333337" iyz="0.0" izz="0.004000793333333333"/>
+      <origin rpy="0.0 0.0 0.0" xyz="-0.05 0.0 0.02"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link_bottom.stl"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link_bottom.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/base_link_motor.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="link_1">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.88065"/>
+      <inertia ixx="0.003669375000000001" ixy="0.0" ixz="0.0" iyy="0.003669375000000001" iyz="0.0" izz="0.0014677500000000005"/>
+      <origin rpy="0.610865 0.418879 0.0" xyz="0.04 -0.01 0.1"/>
+    </inertial>
+    <visual>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_1.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_1.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_1_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_1_motor.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_1" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="ar4_base_link"/>
+    <child link="link_1"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-2.96705972839036" upper="2.96705972839036" velocity="0.5"/>
+    <dynamics damping="0.5" friction="0.0"/>
+  </joint>
+  <link name="link_2">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.57738"/>
+      <inertia ixx="0.0067168539999999995" ixy="0.0" ixz="0.0" iyy="0.0009623000000000001" iyz="0.0" izz="0.0067168539999999995"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.15 0.03"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_motor.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_cover.stl"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_cover.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_cover_logo.stl"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_2_cover_logo.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_2" type="revolute">
+    <origin rpy="-1.5708 0 0" xyz="0.0642 0 0.16977"/>
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-0.7330382858376184" upper="1.5707963267948966" velocity="0.5"/>
+    <dynamics damping="1.0" friction="0.0"/>
+  </joint>
+  <link name="link_3">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.1787"/>
+      <inertia ixx="0.0002516691666666666" ixy="0.0" ixz="0.0" iyy="0.00018614583333333336" iyz="0.0" izz="0.00036335666666666665"/>
+      <origin rpy="0.0 0.0 0.0" xyz="-0.01 0.0 0.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3_motor.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3_misc.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="3.1415 0.0 1.5708" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_3_misc.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_3" type="revolute">
+    <origin rpy="0 0 -1.5708" xyz="0 -0.305 0"/>
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-1.5533430342749532" upper="0.9075712110370513" velocity="0.5"/>
+    <dynamics damping="1.0" friction="0.0"/>
+  </joint>
+  <link name="link_4">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.34936"/>
+      <inertia ixx="0.003086013333333334" ixy="0.0" ixz="0.0" iyy="0.003086013333333334" iyz="0.0" izz="0.000209616"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.08"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_4.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_4.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_4_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 3.1415 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_4_motor.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_4" type="revolute">
+    <origin rpy="-1.5708 0 0" xyz="0 0 0.0"/>
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-2.8797932657906435" upper="2.8797932657906435" velocity="0.5"/>
+    <dynamics damping="0.5" friction="0.0"/>
+  </joint>
+  <link name="link_5">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.11562"/>
+      <inertia ixx="7.708e-05" ixy="0.0" ixz="0.0" iyy="0.000158014" iyz="0.0" izz="0.00011176600000000001"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_5.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_5.stl"/>
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_5_motor.stl"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 -1.5708 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_5_motor.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_5" type="revolute">
+    <origin rpy="1.5708 0 0" xyz="0 0 0.22263"/>
+    <parent link="link_4"/>
+    <child link="link_5"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-1.8325957145940461" upper="1.8325957145940461" velocity="1.0"/>
+    <dynamics damping="0.3" friction="0.0"/>
+  </joint>
+  <link name="link_6">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <inertial>
+      <mass value="0.013863"/>
+      <inertia ixx="9.242000000000001e-07" ixy="0.0" ixz="0.0" iyy="2.3105e-06" iyz="0.0" izz="2.3105e-06"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.01"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_6.stl"/>
+      </geometry>
+      <material name="grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/nikhil/ros2_ws/src/sar_urdf/meshes/ar4/link_6.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="joint_6" type="revolute">
+    <origin rpy="0 -1.5708 0" xyz="-0.03625 0 0"/>
+    <parent link="link_5"/>
+    <child link="link_6"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-2.705260340591211" upper="2.705260340591211" velocity="1.0"/>
+    <dynamics damping="0.2" friction="0.0"/>
+  </joint>
+  <joint name="joint_ar4_mount" type="fixed">
+    <parent link="base_link"/>
+    <child link="ar4_base_link"/>
+    <origin xyz="0.00014048 -0.41501 0.20901" rpy="0 0 -1.5708"/>
+  </joint>
+
+  
+  <gazebo reference="ar4_base_link">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_1">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_2">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_3">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_4">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_5">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo reference="link_6">
+    <selfCollide>true</selfCollide>
+  </gazebo>
+  <gazebo>
+    <!-- AR4 ros2_control plugin will be configured separately -->
+  </gazebo>
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>ign_ros2_control/IgnitionSystem</plugin>
+    </hardware>
+    <joint name="joint_1">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_2">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_3">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_4">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_5">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_6">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo plugin for ros2_control -->
+  <gazebo>
+    <plugin filename="libign_ros2_control-system.so" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+      <robot_param>robot_description</robot_param>
+      <robot_param_node>robot_state_publisher</robot_param_node>
+      <parameters>/home/nikhil/ros2_ws/src/sar_urdf/config/ar4_controller.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+  <!-- GAZEBO PROPERTIES: Friction for wheels (prevents falling) -->
+  <gazebo reference="front_left">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+  
+  <gazebo reference="front_right">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+  
+  <gazebo reference="back_left">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+  
+  <gazebo reference="back_right">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+
+  <gazebo reference="middle_left">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+
+  <gazebo reference="middle_right">
+    <mu1>50.0</mu1>
+    <mu2>50.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>100.0</maxVel>
+  </gazebo>
+
+
+  <!-- Flipper friction -->
+  <gazebo reference="f_front_left">
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+  
+  <gazebo reference="f_front_right">
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+  
+  <gazebo reference="f_back_left">
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+  
+  <gazebo reference="f_back_right">
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+
+  <!-- GAZEBO PLUGINS -->
+  <gazebo>
+    <!-- Differential Drive Controller for 4-wheel skid steering -->
+    <plugin filename="libignition-gazebo-diff-drive-system.so" name="ignition::gazebo::systems::DiffDrive">
+      <left_joint>joint_front_left</left_joint>
+      <left_joint>joint_middle_left</left_joint>
+      <left_joint>joint_back_left</left_joint>
+      <right_joint>joint_front_right</right_joint>
+      <right_joint>joint_middle_right</right_joint>
+      <right_joint>joint_back_right</right_joint>
+      <wheel_separation>0.328</wheel_separation>
+      <wheel_diameter>0.182</wheel_diameter>
+      <max_linear_acceleration>30.0</max_linear_acceleration>
+      <max_angular_acceleration>30.0</max_angular_acceleration>
+      <topic>/cmd_vel</topic>
+      <odom_topic>/odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
+      <odom_publish_frequency>50</odom_publish_frequency>
+    </plugin>
+
+    <!-- Joint State Publisher -->
+    <plugin filename="libignition-gazebo-joint-state-publisher-system.so" name="ignition::gazebo::systems::JointStatePublisher">
+      <topic>/joint_states</topic>
+    </plugin>
+
+
+
+    <!-- Flipper Controllers -->
+    <plugin filename="libignition-gazebo-joint-controller-system.so" name="ignition::gazebo::systems::JointController">
+      <joint_name>joint_f_front_left</joint_name>
+      <initial_position>0.0</initial_position>
+      <p_gain>500.0</p_gain>
+      <i_gain>50.0</i_gain>
+      <d_gain>10.0</d_gain>
+      <topic>/cmd_f_front_left</topic>
+    </plugin>
+
+    <plugin filename="libignition-gazebo-joint-controller-system.so" name="ignition::gazebo::systems::JointController">
+      <joint_name>joint_f_front_right</joint_name>
+      <initial_position>0.0</initial_position>
+      <p_gain>500.0</p_gain>
+      <i_gain>50.0</i_gain>
+      <d_gain>10.0</d_gain>
+      <topic>/cmd_f_front_right</topic>
+    </plugin>
+
+    <plugin filename="libignition-gazebo-joint-controller-system.so" name="ignition::gazebo::systems::JointController">
+      <joint_name>joint_f_back_left</joint_name>
+      <initial_position>0.0</initial_position>
+      <p_gain>500.0</p_gain>
+      <i_gain>50.0</i_gain>
+      <d_gain>10.0</d_gain>
+      <topic>/cmd_f_back_left</topic>
+    </plugin>
+
+    <plugin filename="libignition-gazebo-joint-controller-system.so" name="ignition::gazebo::systems::JointController">
+      <joint_name>joint_f_back_right</joint_name>
+      <initial_position>0.0</initial_position>
+      <p_gain>500.0</p_gain>
+      <i_gain>50.0</i_gain>
+      <d_gain>10.0</d_gain>
+      <topic>/cmd_f_back_right</topic>
+    </plugin>
+  </gazebo>
+
+</robot>
+
