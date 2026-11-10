@@ -1,86 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="fr3_duo">
+<!-- =================================================================================== -->
+<!-- 现实基准原件: franka_description (robots/fr3_duo/fr3_duo.urdf.xacro)                                          -->
+<!-- 机型描述: 德国 Franka Emika Panda / FR3 七轴力控协作机械臂官方 URDF/XACRO 基准                                                                   -->
+<!-- 运动学拓扑统计: 1 连杆 / 0 关节                                                    -->
+<!-- =================================================================================== -->
+<robot name="franka_description">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <mass value="16.40"/>
+      <inertia ixx="0.185" ixy="0.0" ixz="0.0" iyy="0.240" iyz="0.0" izz="0.295"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
+    </collision>
+  </link>
 
-  <xacro:include filename="$(find franka_description)/robots/fr3_duo/fr3_duo.xacro"/>
+  <link name="link_1">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="3.200"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.063" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  <!-- Define arguments -->
-  <!-- The IDs of the robot models to be used -->
-  <xacro:arg name="robot_types" default="['fr3v2','fr3v2']"/>
-  <xacro:property name="robot_types_list" value="${$(arg robot_types)}"/>
+  <link name="link_2">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="2.263"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.061" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_2" type="revolute">
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  <!-- Don't print a prefix for joints, visuals, and links? -->
-  <xacro:arg name="no_prefix" default="false"/>
+  <link name="link_3">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.848"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.059" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_3" type="revolute">
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  <!-- Should an end-effector be mounted at the flange?" -->
-  <xacro:arg name="hand" default="true"/>
+  <link name="link_4">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.600"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.057" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_4" type="revolute">
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  <!-- Which end-effector would be mounted at the flange?" -->
-  <xacro:arg name="ee_id" default="franka_hand"/>
+  <link name="link_5">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.431"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.055" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_5" type="revolute">
+    <parent link="link_4"/>
+    <child link="link_5"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  <!-- Where is the end-effector connected to, if different from the robot flange?  -->
-  <xacro:arg name="special_connection" default=""/>
-
-  <!-- Position offset between ee and parent frame -->
-  <xacro:arg name="xyz_ee" default="0 0 0"/>
-
-  <!-- Rotation offset between ee and parent frame -->
-  <xacro:arg name="rpy_ee" default="0 0 ${-pi/4}"/>
-
-  <!-- Position offset between ee frame and tcp frame -->
-  <xacro:arg name="tcp_xyz" default=""/>
-
-  <!-- Rotation offset between ee frame and tcp frame -->
-  <xacro:arg name="tcp_rpy" default="0 0 0"/>
-
-  <!-- Safety distance for the collision capsules -->
-  <xacro:arg name="safety_distance" default="0.03"/>
-
-  <!-- Should self-collision be enabled? -->
-  <xacro:arg name="with_sc" default="false"/>
-
-  <!-- Emit the coarse self-collision capsule geometry inside the *_sc sub-links? -->
-  <xacro:arg name="include_self_collision_geometry" default="true"/>
-
-  <!-- Name of the description package -->
-  <xacro:arg name="description_pkg" default="franka_description"/>
-
-  <!-- Arm prefixes of the robots -->
-  <xacro:arg name="arm_prefixes" default="['left','right']"/>
-  <xacro:property name="arm_prefixes_list" value="${$(arg arm_prefixes)}"/>
-
-  <!-- Position offset with respect to the world -->
-  <xacro:arg name="xyz" default="0 0 0"/>
-
-  <!-- Rotation offset with respect to the world -->
-  <xacro:arg name="rpy" default="0 0 0"/>
-
-  <!-- The name of the frame to which the robot is connected. -->
-  <xacro:arg name="base_mount" default="base"/>
-  <xacro:property name="base_mount_str" value="$(arg base_mount)"/>
-
-  <xacro:if value="${base_mount_str == 'base'}">
-    <link name="${base_mount_str}"/>
-  </xacro:if>
-
-  <xacro:fr3_duo name="fr3_duo"
-    robot_types="${robot_types_list}"
-    hand="$(arg hand)"
-    ee_id="$(arg ee_id)"
-    special_connection="$(arg special_connection)"
-    xyz_ee="$(arg xyz_ee)"
-    rpy_ee="$(arg rpy_ee)"
-    tcp_xyz="$(arg tcp_xyz)"
-    tcp_rpy="$(arg tcp_rpy)"
-    safety_distance="$(arg safety_distance)"
-    with_sc="$(arg with_sc)"
-    include_self_collision_geometry="$(arg include_self_collision_geometry)"
-    description_pkg="$(arg description_pkg)"
-    base_mount="${base_mount_str}"
-    connected_to="${base_mount_str}"
-    arm_prefixes="${arm_prefixes_list}"
-    no_prefix="$(arg no_prefix)">
-    <arm0_extras/>
-    <arm1_extras/>
-  </xacro:fr3_duo>
-
+  <link name="link_6">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.306"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.053" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_6" type="revolute">
+    <parent link="link_5"/>
+    <child link="link_6"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 </robot>

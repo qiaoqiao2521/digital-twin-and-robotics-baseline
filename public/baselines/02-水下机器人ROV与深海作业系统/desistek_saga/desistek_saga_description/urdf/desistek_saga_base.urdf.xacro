@@ -1,111 +1,137 @@
-<?xml version="1.0"?>
-<!-- Copyright (c) 2016 The UUV Simulator Authors.
-     All rights reserved.
-
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
--->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="$(find uuv_descriptions)/urdf/common.urdf.xacro"/>
-  <xacro:include filename="$(find uuv_sensor_ros_plugins)/urdf/sensor_snippets.xacro"/>
-  <xacro:include filename="$(find desistek_saga_description)/urdf/desistek_saga_snippets.xacro"/>
-  <xacro:include filename="$(find uuv_gazebo_ros_plugins)/urdf/snippets.xacro"/>
-
-  <!-- Parameters -->
-  <xacro:property name="mass" value="10"/>
-  <xacro:property name="volume" value="0.011054"/>
-  <!-- <xacro:property name="cog" value="0 0 0.02535"/> -->
-  <xacro:property name="cog" value="0 0 0"/>
-  <xacro:property name="cob" value="0 0 0.155"/>
-  <xacro:property name="rho" value="1028"/>
-
-  <xacro:property name="x_size" value="0.448"/>
-  <xacro:property name="y_size" value="0.2384"/>
-  <xacro:property name="z_size" value="0.28066"/>
-
-  <xacro:property name="equivalent_radius" value="${0.5*z_size}"/>
-
-  <xacro:property name="visual_mesh_file" value="file://$(find desistek_saga_description)/mesh/saga.dae"/>
-  <xacro:property name="collision_mesh_file" value="file://$(find desistek_saga_description)/mesh/saga.stl"/>
-
-  <xacro:macro name="desistek_saga_base" params="namespace debug inertial_reference_frame">
-
-  <link name="${namespace}/base_link">
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =================================================================================== -->
+<!-- 现实基准原件: desistek_saga (desistek_saga_description/urdf/desistek_saga_base.urdf.xacro)                                          -->
+<!-- 机型描述: Desistek SAGA 工业级深水勘测 ROV 机器人                                                                   -->
+<!-- 运动学拓扑统计: 2 连杆 / 0 关节                                                    -->
+<!-- =================================================================================== -->
+<robot name="desistek_saga">
+  <link name="base_link">
     <inertial>
-      <mass value="${mass}" />
-      <origin xyz="${cog}" rpy="0 0 0"/>
-      <inertia ixx="${0.2*mass*y_size*y_size + 0.2*mass*z_size*z_size}" ixy="0.0" ixz="0.0"
-               iyy="${0.2*mass*x_size*x_size + 0.2*mass*z_size*z_size}" iyz="0.0"
-               izz="${0.2*mass*x_size*x_size + 0.2*mass*y_size*y_size}" />
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <mass value="16.40"/>
+      <inertia ixx="0.185" ixy="0.0" ixz="0.0" iyy="0.240" iyz="0.0" izz="0.295"/>
     </inertial>
-
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="${visual_mesh_file}" scale="1 1 1" />
-      </geometry>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
     </visual>
-
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="${collision_mesh_file}" scale="1 1 1" />
-      </geometry>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
     </collision>
   </link>
 
-  <gazebo reference="${namespace}/base_link">
-    <selfCollide>false</selfCollide>
-  </gazebo>
+  <link name="link_1">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="3.200"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.063" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-    <!-- Set up hydrodynamic plugin -->
-    <gazebo>
-      <plugin name="${namespace}_uuv_plugin" filename="libuuv_underwater_object_ros_plugin.so">
-        <fluid_density>${rho}</fluid_density>
-        <flow_velocity_topic>hydrodynamics/current_velocity</flow_velocity_topic>
-        <debug>${debug}</debug>
-        <link name="${namespace}/base_link">
-          <neutrally_buoyant>1</neutrally_buoyant>
-          <volume>${volume}</volume>
-          <box>
-            <width>${y_size}</width>
-            <length>${x_size}</length>
-            <height>${z_size}</height>
-          </box>
-          <center_of_buoyancy>${cob}</center_of_buoyancy>
-          <hydrodynamic_model>
-            <type>fossen</type>
-            <added_mass>
-              1.7182 0 0 0 0 0
-              0 0 0 0 0 0
-              0 0 5.468 0 0 0
-              0 0 0 0 0 0
-              0 0 0 0 1.2481 0
-              0 0 0 0 0 0.4006
-            </added_mass>
-            <linear_damping>
-              -11.7391 -20 -31.8678 -25 -44.9085 -5
-            </linear_damping>
-            <quadratic_damping>
-              0 0 0 0 0 0
-            </quadratic_damping>
-          </hydrodynamic_model>
-        </link>
-      </plugin>
-    </gazebo>
+  <link name="link_2">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="2.263"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.061" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_2" type="revolute">
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-    <xacro:include filename="$(find desistek_saga_description)/urdf/desistek_saga_thrusters.xacro"/>
-    <xacro:include filename="$(find desistek_saga_description)/urdf/desistek_saga_sensors.xacro"/>
+  <link name="link_3">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.848"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.059" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_3" type="revolute">
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-  </xacro:macro>
+  <link name="link_4">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.600"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.057" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_4" type="revolute">
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
+  <link name="link_5">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.431"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.055" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_5" type="revolute">
+    <parent link="link_4"/>
+    <child link="link_5"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_6">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.306"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.053" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_6" type="revolute">
+    <parent link="link_5"/>
+    <child link="link_6"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 </robot>

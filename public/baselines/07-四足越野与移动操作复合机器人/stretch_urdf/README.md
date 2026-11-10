@@ -1,27 +1,7 @@
-# Overview
+# stretch_urdf
 
-The Stretch URDF package provides URDF and Mesh files for use by Stretch Body.
+Hello Robot Stretch RE1 / RE2 / 3 具身移动操作机器人官方 URDF 全集
 
-Looking for the Stretch 4 repository? Check out https://github.com/hello-robot/stretch4_urdf
-
-This URDF data is uncalibrated and is managed completely seperately from the Stretch ROS(2) URDF data. 
-
-This package can be installed by:
-
-```
-python3 -m pip install  -U hello-robot-stretch-urdf
-```
-
-The URDF and mesh data is installed as a Python package. It's location can be found as:
-
-    import importlib.resources as importlib_resources
-    pkg = str(importlib_resources.files("stretch_urdf"))
-
-The URDF naming convention is `stretch_description_<model_name>_<tool_name>.urdf`
-For example:
-
-    model_name = robot.params['model_name']
-    tool_name = robot.params['tool']
-    urdf_name = pkg + '/%s/stretch_description_%s_%s.urdf' % (model_name, model_name, tool_name)
-
-For further example usesage, see the included `stretch_urdf_example.py`
+- **GitHub Source**: https://github.com/hello-robot/stretch_urdf
+- **Primary Kinematic Baseline**: `stretch_urdf/SE3/stretch_description_SE3_eoa_wrist_dw3_tool_sg3_pro.urdf`
+- **Kinematic Topology**: 61 连杆 / 60 关节

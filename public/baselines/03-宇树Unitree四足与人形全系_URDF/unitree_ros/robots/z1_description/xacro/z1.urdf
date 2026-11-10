@@ -272,5 +272,34 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+
+  <joint name="gripperStator_joint" type="fixed">
+    <origin rpy="0 0 0" xyz="0.051 0.0 0.0"/>
+    <parent link="link06"/>
+    <child link="gripperStator"/>
+  </joint>
+  <link name="gripperStator">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://z1_description/meshes/visual/z1_GripperStator.dae" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="jointGripper" type="revolute">
+    <origin rpy="0 0 0" xyz="0.049 0.0 0"/>
+    <parent link="gripperStator"/>
+    <child link="gripperMover"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="30.0" velocity="3.14" lower="-1.5707963" upper="0.0"/>
+  </joint>
+  <link name="gripperMover">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://z1_description/meshes/visual/z1_GripperMover.dae" scale="1 1 1"/>
+      </geometry>
+    </visual>
+  </link>
 </robot>
 

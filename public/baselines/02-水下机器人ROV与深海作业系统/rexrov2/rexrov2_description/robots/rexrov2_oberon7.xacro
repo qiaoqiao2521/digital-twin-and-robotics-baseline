@@ -1,62 +1,91 @@
 <?xml version="1.0"?>
-<!-- Copyright (c) 2016 The UUV Simulator Authors.
-     All rights reserved.
-
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
--->
-
-<robot name="rexrov2" xmlns:xacro="http://www.ros.org/wiki/xacro" >
-
-  <xacro:arg name="debug" default="0"/>
-  <xacro:arg name="namespace" default="rexrov2"/>
-  <xacro:arg name="use_simplified_mesh" default="false"/>
-  <xacro:arg name="inertial_reference_frame" default="world"/>
-  <!-- Include the ROV macro file -->
-  <xacro:include filename="$(find rexrov2_description)/urdf/rexrov2_base.xacro"/>
-  <xacro:include filename="$(find rexrov2_description)/urdf/rexrov2.gazebo.xacro"/>
-  <xacro:include filename="$(find oberon7_description)/robots/oberon7_default.xacro" />
-
-  <!-- Create the ROV -->
-  <xacro:rexrov2_base
-    namespace="$(arg namespace)"
-    use_simplified_mesh="$(arg use_simplified_mesh)"
-    inertial_reference_frame="$(arg inertial_reference_frame)">
-    <!-- The underwater object plugin is given as an input block parameter to
-     allow the addition of external models of manipulator units -->
-    <gazebo>
-      <plugin name="uuv_plugin" filename="libuuv_underwater_object_ros_plugin.so">
-        <fluid_density>1028.0</fluid_density>
-        <flow_velocity_topic>hydrodynamics/current_velocity</flow_velocity_topic>
-        <debug>$(arg debug)</debug>
-        <!-- Adding the hydrodynamic and hydrostatic parameters for the vehicle-->
-        <xacro:rexrov2_hydro_model namespace="$(arg namespace)"/>
-        <xacro:oberon7_hydro_model namespace="oberon7"/>
-      </plugin>
-    </gazebo>
-  </xacro:rexrov2_base>
-
-  <xacro:oberon7 namespace="oberon7" parent="$(arg namespace)/base_link">
+<robot name="rexrov2_oberon7">
+  <link name="rexrov2/base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="package://rexrov2_description/meshes/RexROV2_no_props.dae"/></geometry>
+    </visual>
+  </link>
+  <link name="thruster_0"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_0_joint" type="continuous">
+    <origin xyz="0.4878 0 0.2373" rpy="0 0 1.5707963"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_0"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="thruster_1"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_1_joint" type="continuous">
+    <origin xyz="-0.8217 0 0.589" rpy="0 -1.3089969 0"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_1"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="thruster_2"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_2_joint" type="continuous">
+    <origin xyz="0.8654 -0.5322 0.5332" rpy="0 -1.1780972 1.5707963"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_2"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="thruster_3"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_3_joint" type="continuous">
+    <origin xyz="0.8654 0.5322 0.5332" rpy="0 1.1780972 1.5707963"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_3"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="thruster_4"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_4_joint" type="continuous">
+    <origin xyz="-0.7076 0.5129 0.2404" rpy="0 0 0.4363323"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_4"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="thruster_5"><visual><geometry><mesh filename="package://rexrov2_description/meshes/Propeller.dae"/></geometry></visual></link>
+  <joint name="thruster_5_joint" type="continuous">
+    <origin xyz="-0.7076 -0.5129 0.2404" rpy="0 0 -0.4363323"/>
+    <parent link="rexrov2/base_link"/><child link="thruster_5"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="oberon7_base"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/Base.dae"/></geometry></visual></link>
+  <joint name="oberon7_mount_joint" type="fixed">
     <origin xyz="1.3 -0.5 -0.665" rpy="0 0 0"/>
-  </xacro:oberon7>
-
-  <gazebo>
-      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-        <robotNamespace>/$(arg namespace)</robotNamespace>
-        <robotParam>/$(arg namespace)/robot_description</robotParam>
-      </plugin>
-  </gazebo>
-
-  <!-- Joint state publisher plugin -->
-  <xacro:default_joint_state_publisher namespace="$(arg namespace)" update_rate="50"/>
-
+    <parent link="rexrov2/base_link"/><child link="oberon7_base"/>
+  </joint>
+  <link name="oberon7_shoulder_link"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/ShoulderLink.dae"/></geometry></visual></link>
+  <joint name="oberon7_azimuth" type="revolute">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="oberon7_base"/><child link="oberon7_shoulder_link"/><axis xyz="0 0 1"/>
+    <limit effort="200" lower="-1.04719758" upper="1.04719758" velocity="0.17"/>
+  </joint>
+  <link name="oberon7_upper_arm"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/UpperArm.dae"/></geometry></visual></link>
+  <joint name="oberon7_shoulder" type="revolute">
+    <origin xyz="0.06955 0.00015 0.01536" rpy="1.5707963 0 0"/>
+    <parent link="oberon7_shoulder_link"/><child link="oberon7_upper_arm"/><axis xyz="0 0 1"/>
+    <limit effort="5000" lower="-1.57079637" upper="1.57079637" velocity="0.17"/>
+  </joint>
+  <link name="oberon7_elbow_link"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/ElbowLink.dae"/></geometry></visual></link>
+  <joint name="oberon7_elbow" type="revolute">
+    <origin xyz="0.55616 -0.01229 0" rpy="0 0 0"/>
+    <parent link="oberon7_upper_arm"/><child link="oberon7_elbow_link"/><axis xyz="0 0 1"/>
+    <limit effort="300" lower="-1.57079637" upper="1.04719758" velocity="0.13"/>
+  </joint>
+  <link name="oberon7_forearm"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/Forearm.dae"/></geometry></visual></link>
+  <joint name="oberon7_roll" type="revolute">
+    <origin xyz="0.1349014 -0.1936267 0" rpy="1.5707963 0 0"/>
+    <parent link="oberon7_elbow_link"/><child link="oberon7_forearm"/><axis xyz="0 0 1"/>
+    <limit effort="200" lower="-2.356194555" upper="2.356194555" velocity="0.085"/>
+  </joint>
+  <link name="oberon7_wrist_link"><visual><geometry><mesh filename="package://oberon7_description/meshes/serial_arm/visual/Wrist.dae"/></geometry></visual></link>
+  <joint name="oberon7_pitch" type="revolute">
+    <origin xyz="0 0 0.3159576" rpy="-1.5707963 -1.5707963 0"/>
+    <parent link="oberon7_forearm"/><child link="oberon7_wrist_link"/><axis xyz="0 0 1"/>
+    <limit effort="200" lower="-1.57079637" upper="1.57079637" velocity="0.26"/>
+  </joint>
+  <link name="oberon7_end_effector"><visual><geometry><mesh filename="package://oberon7_description/meshes/parallel_gripper/visual/BaseGripper.dae"/></geometry></visual></link>
+  <joint name="oberon7_wrist" type="continuous">
+    <origin xyz="0.19304 0 0" rpy="0 0 0"/>
+    <parent link="oberon7_wrist_link"/><child link="oberon7_end_effector"/><axis xyz="1 0 0"/>
+  </joint>
+  <link name="oberon7_finger_left"><visual><geometry><mesh filename="package://oberon7_description/meshes/parallel_gripper/visual/Finger.dae"/></geometry></visual></link>
+  <joint name="oberon7_finger_left_joint" type="revolute">
+    <origin xyz="0.0444267 0.0391376 0" rpy="0 0 0"/>
+    <parent link="oberon7_end_effector"/><child link="oberon7_finger_left"/><axis xyz="0 0 1"/>
+    <limit effort="30" lower="0" upper="1.04709" velocity="0.15"/>
+  </joint>
+  <link name="oberon7_finger_right"><visual><origin xyz="0 0 0" rpy="3.14159265 0 0"/><geometry><mesh filename="package://oberon7_description/meshes/parallel_gripper/visual/Finger.dae"/></geometry></visual></link>
+  <joint name="oberon7_finger_right_joint" type="revolute">
+    <origin xyz="0.0444267 -0.0391376 0" rpy="3.14159265 3.14159265 3.14159265"/>
+    <parent link="oberon7_end_effector"/><child link="oberon7_finger_right"/><axis xyz="0 0 -1"/>
+    <limit effort="30" lower="0" upper="1.04709" velocity="0.15"/>
+  </joint>
 </robot>

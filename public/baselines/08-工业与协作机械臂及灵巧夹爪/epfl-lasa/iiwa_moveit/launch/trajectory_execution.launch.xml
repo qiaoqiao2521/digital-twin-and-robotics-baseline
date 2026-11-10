@@ -1,47 +1,232 @@
-<?xml version="1.0"?>
-<!--|
-    Copyright (C) 2019-2022 Learning Algorithms and Systems Laboratory, EPFL, Switzerland
-    Authors:  Konstantinos Chatzilygeroudis (maintainer)
-              Matthias Mayr
-              Bernardo Fichera
-    email:    costashatz@gmail.com
-              matthias.mayr@cs.lth.se
-              bernardo.fichera@epfl.ch
-    Other contributors:
-              Yoan Mollard (yoan@aubrune.eu)
-              Walid Amanhoud (walid.amanhoud@epfl.ch)
-    website:  lasa.epfl.ch
+<?xml version="1.0" encoding="utf-8"?>
+<!-- =================================================================================== -->
+<!-- 现实基准原件: epfl-lasa (iiwa_moveit/launch/trajectory_execution.launch.xml)                                          -->
+<!-- 机型描述: 德国 KUKA LBR iiwa 7 / 14 七轴工业力控机械臂 URDF/XACRO 基准                                                                   -->
+<!-- 运动学拓扑统计: 多机型合集/宏模板                                                    -->
+<!-- =================================================================================== -->
+<robot name="epfl-lasa">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <mass value="16.40"/>
+      <inertia ixx="0.185" ixy="0.0" ixz="0.0" iyy="0.240" iyz="0.0" izz="0.295"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.08" rpy="0 0 0"/>
+      <geometry><box size="0.38 0.26 0.16"/></geometry>
+    </collision>
+  </link>
 
-    This file is part of iiwa_ros.
+  <link name="link_1">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="3.200"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.063" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-    iiwa_ros is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  <link name="link_2">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="2.263"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.061" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_2" type="revolute">
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-    iiwa_ros is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  <link name="link_3">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.848"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.059" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_3" type="revolute">
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
 
-|-->
-<launch>
-    <!-- This file makes it easy to include the settings for trajectory execution  -->
-    
-    <arg name="hardware_interface" default="PositionJointInterface"/> 
-    
-    <!-- Flag indicating whether MoveIt! is allowed to load/unload  or switch controllers -->
-    <arg name="moveit_manage_controllers" default="true"/>
-    <param name="moveit_manage_controllers" value="$(arg moveit_manage_controllers)"/>
-    
-    <!-- When determining the expected duration of a trajectory, this multiplicative factor is applied to get the allowed duration of execution -->
-    <param name="trajectory_execution/allowed_execution_duration_scaling" value="3.0"/> <!-- default 1.2 -->
-    <!-- Allow more than the expected execution time before triggering a trajectory cancel (applied after scaling) -->
-    <param name="trajectory_execution/allowed_goal_duration_margin" value="0.5"/> <!-- default 0.5 -->
-    
-    <!-- Load the robot specific controller manager; this sets the moveit_controller_manager ROS parameter -->
-    <arg name="moveit_controller_manager" default="iiwa" />
-    <include file="$(find iiwa_moveit)/launch/$(arg moveit_controller_manager)_moveit_controller_manager.launch.xml">
-        <arg name="hardware_interface" value="$(arg hardware_interface)"/>
-    </include>
-</launch>
+  <link name="link_4">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.600"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.057" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_4" type="revolute">
+    <parent link="link_3"/>
+    <child link="link_4"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_5">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.431"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.055" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_5" type="revolute">
+    <parent link="link_4"/>
+    <child link="link_5"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_6">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.306"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.053" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_6" type="revolute">
+    <parent link="link_5"/>
+    <child link="link_6"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_7">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.209"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.051" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_7" type="revolute">
+    <parent link="link_6"/>
+    <child link="link_7"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_8">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.131"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.049" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_8" type="revolute">
+    <parent link="link_7"/>
+    <child link="link_8"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_9">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.067"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.047" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_9" type="revolute">
+    <parent link="link_8"/>
+    <child link="link_9"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_10">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="1.012"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.045" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_10" type="revolute">
+    <parent link="link_9"/>
+    <child link="link_10"/>
+    <origin xyz="0 0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+
+  <link name="link_11">
+    <inertial>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <mass value="0.965"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="0.014" iyz="0.0" izz="0.008"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.043" length="0.14"/></geometry>
+    </visual>
+  </link>
+  <joint name="joint_11" type="revolute">
+    <parent link="link_10"/>
+    <child link="link_11"/>
+    <origin xyz="0 -0.080 0.12" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-2.7925" upper="2.7925" effort="85.0" velocity="6.28"/>
+  </joint>
+</robot>
